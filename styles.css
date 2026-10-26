@@ -1,0 +1,158 @@
+:root {
+  --bg: #000000;
+  --primary: #ff1744;
+  --secondary: #b00020;
+  --ui: rgba(255, 255, 255, 0.72);
+  --ui-dim: rgba(255, 255, 255, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+  font-family: "Noto Sans", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: block;
+  touch-action: manipulation;
+}
+
+/* Controles discretos que se ocultan solos */
+.controls {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translate(-50%, 8px);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(20, 0, 4, 0.55);
+  border: 1px solid rgba(255, 23, 68, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.controls.visible,
+.controls:focus-within {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+.controls button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ui-dim);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.controls button svg { width: 20px; height: 20px; }
+.controls button:hover { color: var(--ui); background: rgba(255, 23, 68, 0.12); }
+.controls button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; color: var(--ui); }
+.controls button[aria-pressed="true"] { color: var(--primary); }
+.controls button[hidden] { display: none; }
+.controls .sep { width: 1px; height: 18px; margin: 0 4px; background: rgba(255, 255, 255, 0.12); }
+
+/* Etiqueta de idioma */
+.tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(16, 0, 3, 0.88);
+  border: 1px solid rgba(255, 23, 68, 0.3);
+  color: #ffd6dd;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: fade-in 0.18s ease;
+}
+.tooltip[hidden] { display: none; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Grabación */
+.rec-indicator {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--primary);
+  opacity: 0;
+  pointer-events: none;
+}
+/* El indicador es DOM: no queda grabado en el vídeo del canvas. */
+body.recording .rec-indicator { opacity: 0.8; animation: blink 1.2s infinite; }
+body.recording .controls { opacity: 0; pointer-events: none; }
+@keyframes blink { 50% { opacity: 0.25; } }
+
+/* Lista accesible */
+dialog {
+  font-family: var(--font-stack, "Noto Sans", system-ui, sans-serif);
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(80vh, 720px);
+  padding: 0;
+  border: 1px solid rgba(255, 23, 68, 0.25);
+  border-radius: 12px;
+  background: #0b0003;
+  color: #f3d7dc;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
+dialog header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px 8px;
+  background: #0b0003;
+}
+dialog h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--primary); }
+dialog header button {
+  border: 0; background: none; color: var(--ui); font-size: 24px; cursor: pointer; line-height: 1;
+}
+dialog header button:focus-visible { outline: 2px solid var(--primary); }
+.disclaimer { margin: 0 20px 8px; font-size: 12px; color: var(--ui-dim); }
+#language-list { list-style: none; margin: 0; padding: 0 20px 20px; }
+#language-list li { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+#language-list .phrase { font-size: 17px; color: #ff5070; }
+#language-list .meta { font-size: 12px; color: var(--ui-dim); }
+
+/* Mensaje al seleccionar un idioma */
+.message-phrase { margin: 2px 0 0; font-size: 13px; color: var(--ui-dim); }
+.message-body { padding: 4px 20px 24px; }
+.message-body p { margin: 0 0 6px; font-size: 16px; line-height: 1.5; color: #ffd6dd; }
+.message-body p.chorus { color: #ff5070; font-weight: 600; margin-bottom: 2px; }
+.message-body p.chorus:first-of-type { margin-top: 14px; }
+#language-list button {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
+  padding: 0; border: 0; background: none; text-align: start; font: inherit; color: inherit; cursor: pointer;
+}
+#language-list button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .controls, .tooltip { transition: none; animation: none; }
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}

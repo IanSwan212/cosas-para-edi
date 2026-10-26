@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Love in Every Language</title>
+  <meta name="description" content="Un corazón construido con cientos de traducciones de «Te amo»." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="stage" role="img"
+    aria-label="Un corazón rojo formado por traducciones de «Te amo» en más de cien idiomas, con «TE AMO» en el centro."></canvas>
+
+  <div id="tooltip" class="tooltip" role="status" aria-live="polite" hidden></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M12 5a7 7 0 1 1-6.6 4.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 4.5v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="currentColor"/><path d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 16l4-4.5 3 3 2-2 2.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6.5" width="12.5" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 10.5l5.5-3v9l-5.5-3z" fill="currentColor"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="5" cy="7" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="5" cy="17" r="1.2" fill="currentColor"/></symbol>
+  </svg>
+
+  <nav id="controls" class="controls" aria-label="Controles de la animación">
+    <button id="btn-play" type="button" aria-label="Pausar"><svg><use href="#i-pause"/></svg></button>
+    <button id="btn-restart" type="button" aria-label="Reiniciar" title="Reiniciar (R)"><svg><use href="#i-restart"/></svg></button>
+    <button id="btn-sound" type="button" aria-label="Activar sonido" aria-pressed="false" title="Sonido (M)"><svg><use href="#i-mute"/></svg></button>
+    <span class="sep" aria-hidden="true"></span>
+    <button id="btn-png" type="button" aria-label="Guardar imagen PNG" title="Guardar imagen"><svg><use href="#i-image"/></svg></button>
+    <button id="btn-video" type="button" aria-label="Exportar vídeo" title="Exportar vídeo"><svg><use href="#i-video"/></svg></button>
+    <button id="btn-list" type="button" aria-label="Ver lista de idiomas" title="Idiomas"><svg><use href="#i-list"/></svg></button>
+    <button id="btn-fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg><use href="#i-full"/></svg></button>
+  </nav>
+
+  <div class="rec-indicator" aria-hidden="true">REC</div>
+
+  <dialog id="languages" aria-labelledby="languages-title">
+    <header>
+      <h2 id="languages-title">«Te amo» en <span id="language-count"></span> idiomas</h2>
+      <button id="close-languages" type="button" aria-label="Cerrar">×</button>
+    </header>
+    <p class="disclaimer">Traducciones pendientes de verificación por hablantes nativos. Ver TRANSLATIONS.md.</p>
+    <ul id="language-list"></ul>
+  </dialog>
+
+  <div id="message-live" class="sr-only" aria-live="polite"></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

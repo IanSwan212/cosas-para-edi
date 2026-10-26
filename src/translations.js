@@ -1,0 +1,183 @@
+// Base multilingüe de «Te amo».
+//
+// IMPORTANTE: ninguna entrada se ha contrastado con una fuente externa durante el
+// desarrollo, así que `verified` es false en todas. `confidence` refleja la confianza
+// del autor: "high" = expresión ampliamente documentada y estable; "medium" = probable,
+// pero conviene que la revise un hablante nativo. Las entradas de baja confianza se
+// excluyeron (ver TRANSLATIONS.md).
+//
+// Formato compacto: [id BCP-47, idioma, nombre nativo, texto, script ISO 15924, confianza, nota]
+
+const RTL_SCRIPTS = new Set(["Arab", "Hebr", "Thaa", "Syrc"]);
+
+const RAW = [
+  // — Europa (romance)
+  ["es", "Spanish", "Español", "Te amo", "Latn", "high", "«Te quiero» es también muy común."],
+  ["pt", "Portuguese", "Português", "Eu te amo", "Latn", "high", "Variante brasileña; en Portugal es frecuente «Amo-te»."],
+  ["fr", "French", "Français", "Je t'aime", "Latn", "high"],
+  ["it", "Italian", "Italiano", "Ti amo", "Latn", "high"],
+  ["ro", "Romanian", "Română", "Te iubesc", "Latn", "high"],
+  ["ca", "Catalan", "Català", "T'estimo", "Latn", "high"],
+  ["gl", "Galician", "Galego", "Quérote", "Latn", "medium", "También «Ámote»."],
+  ["ast", "Asturian", "Asturianu", "Quiérote", "Latn", "medium"],
+  ["oc", "Occitan", "Occitan", "T'aimi", "Latn", "medium"],
+  ["co", "Corsican", "Corsu", "Ti tengu caru", "Latn", "medium"],
+  ["scn", "Sicilian", "Sicilianu", "Ti amu", "Latn", "medium"],
+  ["vec", "Venetian", "Vèneto", "Te vojo ben", "Latn", "medium"],
+  ["pap", "Papiamento", "Papiamentu", "Mi stima bo", "Latn", "medium"],
+  ["ht", "Haitian Creole", "Kreyòl ayisyen", "Mwen renmen ou", "Latn", "high"],
+  // — Europa (germánicas)
+  ["en", "English", "English", "I love you", "Latn", "high"],
+  ["de", "German", "Deutsch", "Ich liebe dich", "Latn", "high"],
+  ["nl", "Dutch", "Nederlands", "Ik hou van jou", "Latn", "high"],
+  ["af", "Afrikaans", "Afrikaans", "Ek het jou lief", "Latn", "high"],
+  ["fy", "West Frisian", "Frysk", "Ik hâld fan dy", "Latn", "medium"],
+  ["lb", "Luxembourgish", "Lëtzebuergesch", "Ech hunn dech gär", "Latn", "high"],
+  ["da", "Danish", "Dansk", "Jeg elsker dig", "Latn", "high"],
+  ["nb", "Norwegian (Bokmål)", "Norsk bokmål", "Jeg elsker deg", "Latn", "high"],
+  ["sv", "Swedish", "Svenska", "Jag älskar dig", "Latn", "high"],
+  ["is", "Icelandic", "Íslenska", "Ég elska þig", "Latn", "high"],
+  ["fo", "Faroese", "Føroyskt", "Eg elski teg", "Latn", "medium"],
+  ["yi", "Yiddish", "ייִדיש", "איך האָב דיך ליב", "Hebr", "high"],
+  // — Europa (célticas)
+  ["ga", "Irish", "Gaeilge", "Tá grá agam duit", "Latn", "high"],
+  ["gd", "Scottish Gaelic", "Gàidhlig", "Tha gaol agam ort", "Latn", "high"],
+  ["cy", "Welsh", "Cymraeg", "Rwy'n dy garu di", "Latn", "high"],
+  ["br", "Breton", "Brezhoneg", "Da garout a ran", "Latn", "medium"],
+  ["kw", "Cornish", "Kernewek", "My a'th kar", "Latn", "medium"],
+  ["gv", "Manx", "Gaelg", "Ta graih aym ort", "Latn", "medium"],
+  // — Europa (eslavas, bálticas y otras)
+  ["ru", "Russian", "Русский", "Я тебя люблю", "Cyrl", "high"],
+  ["uk", "Ukrainian", "Українська", "Я тебе кохаю", "Cyrl", "high"],
+  ["be", "Belarusian", "Беларуская", "Я цябе кахаю", "Cyrl", "high"],
+  ["pl", "Polish", "Polski", "Kocham cię", "Latn", "high"],
+  ["cs", "Czech", "Čeština", "Miluji tě", "Latn", "high"],
+  ["sk", "Slovak", "Slovenčina", "Ľúbim ťa", "Latn", "high"],
+  ["sl", "Slovene", "Slovenščina", "Ljubim te", "Latn", "high"],
+  ["hr", "Croatian", "Hrvatski", "Volim te", "Latn", "high", "Idéntico en bosnio y serbio latino; se incluye una sola vez."],
+  ["sr", "Serbian", "Српски", "Волим те", "Cyrl", "high"],
+  ["bg", "Bulgarian", "Български", "Обичам те", "Cyrl", "high"],
+  ["mk", "Macedonian", "Македонски", "Те сакам", "Cyrl", "high"],
+  ["lt", "Lithuanian", "Lietuvių", "Aš tave myliu", "Latn", "high"],
+  ["lv", "Latvian", "Latviešu", "Es tevi mīlu", "Latn", "high"],
+  ["sq", "Albanian", "Shqip", "Të dua", "Latn", "high"],
+  ["el", "Greek", "Ελληνικά", "Σ' αγαπώ", "Grek", "high"],
+  ["eu", "Basque", "Euskara", "Maite zaitut", "Latn", "high"],
+  ["mt", "Maltese", "Malti", "Inħobbok", "Latn", "high"],
+  ["fi", "Finnish", "Suomi", "Minä rakastan sinua", "Latn", "high"],
+  ["et", "Estonian", "Eesti", "Ma armastan sind", "Latn", "high"],
+  ["hu", "Hungarian", "Magyar", "Szeretlek", "Latn", "high"],
+  ["eo", "Esperanto", "Esperanto", "Mi amas vin", "Latn", "high"],
+  // — Cáucaso, Asia central y Oriente Medio
+  ["ka", "Georgian", "ქართული", "მიყვარხარ", "Geor", "high"],
+  ["hy", "Armenian", "Հայերեն", "Ես քեզ սիրում եմ", "Armn", "high"],
+  ["tr", "Turkish", "Türkçe", "Seni seviyorum", "Latn", "high"],
+  ["az", "Azerbaijani", "Azərbaycanca", "Səni sevirəm", "Latn", "high"],
+  ["kk", "Kazakh", "Қазақша", "Мен сені сүйемін", "Cyrl", "high"],
+  ["ky", "Kyrgyz", "Кыргызча", "Мен сени сүйөм", "Cyrl", "medium"],
+  ["uz", "Uzbek", "Oʻzbekcha", "Men seni sevaman", "Latn", "high"],
+  ["tk", "Turkmen", "Türkmençe", "Men seni söýýärin", "Latn", "medium"],
+  ["tt", "Tatar", "Татарча", "Мин сине яратам", "Cyrl", "medium"],
+  ["tg", "Tajik", "Тоҷикӣ", "Ман туро дӯст медорам", "Cyrl", "medium"],
+  ["mn", "Mongolian", "Монгол", "Би чамд хайртай", "Cyrl", "high"],
+  ["ar", "Arabic", "العربية", "أحبك", "Arab", "high", "La vocalización cambia según el género del destinatario (uḥibbuka / uḥibbuki); sin vocalizar es neutra."],
+  ["he", "Hebrew", "עברית", "אני אוהב אותך", "Hebr", "high", "Forma de hablante masculino; femenino: «אני אוהבת אותך»."],
+  ["fa", "Persian", "فارسی", "دوستت دارم", "Arab", "high"],
+  ["ku", "Kurdish (Kurmanji)", "Kurmancî", "Ez ji te hez dikim", "Latn", "high"],
+  ["ckb", "Central Kurdish (Sorani)", "کوردی", "خۆشمدەوێیت", "Arab", "medium"],
+  ["ps", "Pashto", "پښتو", "زه تا سره مینه لرم", "Arab", "medium"],
+  ["ug", "Uyghur", "ئۇيغۇرچە", "مەن سىزنى ياخشى كۆرىمەن", "Arab", "medium"],
+  // — Asia meridional
+  ["hi", "Hindi", "हिन्दी", "मैं तुमसे प्यार करता हूँ", "Deva", "high", "Hablante masculino; femenino: «करती हूँ»."],
+  ["ur", "Urdu", "اردو", "میں تم سے محبت کرتا ہوں", "Arab", "high", "Hablante masculino; femenino: «کرتی ہوں»."],
+  ["bn", "Bengali", "বাংলা", "আমি তোমাকে ভালোবাসি", "Beng", "high"],
+  ["as", "Assamese", "অসমীয়া", "মই তোমাক ভাল পাওঁ", "Beng", "medium"],
+  ["pa", "Punjabi", "ਪੰਜਾਬੀ", "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", "Guru", "medium", "Hablante masculino; femenino: «ਕਰਦੀ ਹਾਂ»."],
+  ["gu", "Gujarati", "ગુજરાતી", "હું તને પ્રેમ કરું છું", "Gujr", "high"],
+  ["mr", "Marathi", "मराठी", "माझं तुझ्यावर प्रेम आहे", "Deva", "medium"],
+  ["ne", "Nepali", "नेपाली", "म तिमीलाई माया गर्छु", "Deva", "high"],
+  ["or", "Odia", "ଓଡ଼ିଆ", "ମୁଁ ତୁମକୁ ଭଲ ପାଏ", "Orya", "medium"],
+  ["ta", "Tamil", "தமிழ்", "நான் உன்னை காதலிக்கிறேன்", "Taml", "high"],
+  ["te", "Telugu", "తెలుగు", "నేను నిన్ను ప్రేమిస్తున్నాను", "Telu", "high"],
+  ["kn", "Kannada", "ಕನ್ನಡ", "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ", "Knda", "high"],
+  ["ml", "Malayalam", "മലയാളം", "ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", "Mlym", "high"],
+  ["si", "Sinhala", "සිංහල", "මම ඔයාට ආදරෙයි", "Sinh", "high"],
+  ["sd", "Sindhi", "سنڌي", "مان توسان پيار ڪريان ٿو", "Arab", "medium", "Hablante masculino."],
+  ["bo", "Tibetan", "བོད་སྐད", "ང་ཁྱེད་རང་ལ་དགའ་པོ་ཡོད།", "Tibt", "medium"],
+  // — Asia oriental y sudeste asiático
+  ["zh-Hans", "Chinese (Simplified)", "简体中文", "我爱你", "Hans", "high"],
+  ["zh-Hant", "Chinese (Traditional)", "繁體中文", "我愛你", "Hant", "high", "También es la forma escrita habitual en cantonés; no se duplica."],
+  ["ja", "Japanese", "日本語", "愛してる", "Jpan", "high", "Registro coloquial de «愛している»."],
+  ["ko", "Korean", "한국어", "사랑해", "Kore", "high", "Registro informal; formal: «사랑합니다»."],
+  ["th", "Thai", "ไทย", "ฉันรักเธอ", "Thai", "high"],
+  ["lo", "Lao", "ລາວ", "ຂ້ອຍຮັກເຈົ້າ", "Laoo", "high"],
+  ["km", "Khmer", "ខ្មែរ", "ខ្ញុំស្រលាញ់អ្នក", "Khmr", "medium"],
+  ["my", "Burmese", "မြန်မာ", "ချစ်တယ်", "Mymr", "high"],
+  ["vi", "Vietnamese", "Tiếng Việt", "Anh yêu em", "Latn", "high", "Pronombres de hombre a mujer; a la inversa: «Em yêu anh»."],
+  ["hmn", "Hmong", "Hmoob", "Kuv hlub koj", "Latn", "medium"],
+  ["id", "Indonesian", "Bahasa Indonesia", "Aku cinta kamu", "Latn", "high"],
+  ["ms", "Malay", "Bahasa Melayu", "Saya cintakan awak", "Latn", "medium"],
+  ["jv", "Javanese", "Basa Jawa", "Aku tresna marang kowé", "Latn", "medium"],
+  ["su", "Sundanese", "Basa Sunda", "Abdi bogoh ka anjeun", "Latn", "medium"],
+  ["tl", "Tagalog", "Tagalog", "Mahal kita", "Latn", "high"],
+  ["ceb", "Cebuano", "Sinugbuanong Binisaya", "Gihigugma tika", "Latn", "medium"],
+  ["ilo", "Ilocano", "Ilokano", "Ay-ayaten ka", "Latn", "medium"],
+  // — Oceanía
+  ["haw", "Hawaiian", "ʻŌlelo Hawaiʻi", "Aloha au iā ʻoe", "Latn", "high"],
+  ["mi", "Māori", "Te reo Māori", "Kei te aroha au ki a koe", "Latn", "medium"],
+  ["sm", "Samoan", "Gagana Sāmoa", "Ou te alofa ia te oe", "Latn", "medium"],
+  ["to", "Tongan", "Lea faka-Tonga", "ʻOku ou ʻofa ʻiate koe", "Latn", "medium"],
+  ["fj", "Fijian", "Na Vosa Vakaviti", "Au domoni iko", "Latn", "medium"],
+  ["ty", "Tahitian", "Reo Tahiti", "Ua here vau ia oe", "Latn", "medium"],
+  ["ch", "Chamorro", "Chamoru", "Hu guaiya hao", "Latn", "medium"],
+  // — África
+  ["sw", "Swahili", "Kiswahili", "Nakupenda", "Latn", "high"],
+  ["am", "Amharic", "አማርኛ", "እወድሃለሁ", "Ethi", "medium", "Dirigido a un hombre; a una mujer: «እወድሻለሁ»."],
+  ["so", "Somali", "Soomaali", "Waan ku jeclahay", "Latn", "high"],
+  ["om", "Oromo", "Afaan Oromoo", "Sin jaalladha", "Latn", "medium"],
+  ["yo", "Yoruba", "Yorùbá", "Mo nífẹ̀ẹ́ rẹ", "Latn", "medium"],
+  ["ig", "Igbo", "Igbo", "A hụrụ m gị n'anya", "Latn", "high"],
+  ["ha", "Hausa", "Hausa", "Ina son ki", "Latn", "medium", "Dirigido a una mujer; a un hombre: «Ina son ka»."],
+  ["zu", "Zulu", "isiZulu", "Ngiyakuthanda", "Latn", "high"],
+  ["xh", "Xhosa", "isiXhosa", "Ndiyakuthanda", "Latn", "high"],
+  ["st", "Sesotho", "Sesotho", "Ke a o rata", "Latn", "medium"],
+  ["tn", "Setswana", "Setswana", "Ke a go rata", "Latn", "medium"],
+  ["sn", "Shona", "chiShona", "Ndinokuda", "Latn", "high"],
+  ["ny", "Chichewa", "Chicheŵa", "Ndimakukonda", "Latn", "high"],
+  ["rw", "Kinyarwanda", "Ikinyarwanda", "Ndagukunda", "Latn", "high", "Idéntico en kirundi; se incluye una sola vez."],
+  ["lg", "Luganda", "Luganda", "Nkwagala", "Latn", "high"],
+  ["ln", "Lingala", "Lingála", "Nalingi yo", "Latn", "high"],
+  ["mg", "Malagasy", "Malagasy", "Tiako ianao", "Latn", "high"],
+  ["wo", "Wolof", "Wolof", "Dama la nob", "Latn", "medium"],
+  ["ak", "Twi (Akan)", "Twi", "Me dɔ wo", "Latn", "medium"],
+  ["ee", "Ewe", "Eʋegbe", "Melɔ̃ wò", "Latn", "medium"],
+  ["bm", "Bambara", "Bamanankan", "N b'i fɛ", "Latn", "medium"],
+  ["kab", "Kabyle", "Taqbaylit", "Ḥemmleɣ-kem", "Latn", "medium", "Dirigido a una mujer; a un hombre: «Ḥemmleɣ-k»."],
+  // — Américas (lenguas originarias)
+  ["nah", "Nahuatl", "Nāhuatl", "Nimitztlazohtla", "Latn", "high", "Náhuatl clásico; hay variantes regionales."],
+  ["qu", "Quechua", "Runa Simi", "Munakuyki", "Latn", "medium"],
+  ["gn", "Guarani", "Avañe'ẽ", "Rohayhu", "Latn", "high"],
+  ["yua", "Yucatec Maya", "Maaya t'aan", "In yaakumech", "Latn", "medium"],
+  ["nv", "Navajo", "Diné bizaad", "Ayóó ánííníshní", "Latn", "high"],
+  ["kl", "Greenlandic", "Kalaallisut", "Asavakkit", "Latn", "medium"]
+];
+
+export const TRANSLATIONS = RAW.map(([id, language, nativeName, text, script, confidence, note]) => ({
+  id,
+  language,
+  nativeName,
+  text,
+  direction: RTL_SCRIPTS.has(script) ? "rtl" : "ltr",
+  script,
+  verified: false,
+  confidence,
+  note: note || "",
+  source: "Conocimiento lingüístico del autor; pendiente de verificación externa"
+}));
+
+// Salvaguarda: no puede haber textos exactamente duplicados.
+const seen = new Set();
+for (const t of TRANSLATIONS) {
+  if (seen.has(t.text)) console.warn(`Traducción duplicada: ${t.id} «${t.text}»`);
+  seen.add(t.text);
+}
