@@ -190,12 +190,13 @@ function showMessage(t) {
     chorusFrom: msg.lines.length - 10,
     lang: msg.lang,
     measure: scene.measure,
-    reserved: renderer.final.box
+    reserved: renderer.final.box,
+    rtl: msg.dir === "rtl"
   });
   const caption = t
     ? `${t.language} · ${t.nativeName}${msg.translated ? "" : " — original en español"}`
     : "";
-  renderer.setMessage({ tokens, size, caption, lang: msg.lang });
+  renderer.setMessage({ tokens, size, caption, lang: msg.lang, dir: msg.dir });
   live.lang = msg.lang;
   live.textContent = msg.lines.join(". ");
   startPump();

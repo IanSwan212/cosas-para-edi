@@ -100,7 +100,7 @@ export class Renderer {
 
   /* ---------- Modo mensaje: el texto se infla dentro del corazón ---------- */
 
-  setMessage({ tokens, size, caption, lang }) {
+  setMessage({ tokens, size, caption, lang, dir = "ltr" }) {
     if (!this.msgLayer) {
       this.msgLayer = document.createElement("canvas");
       this.mctx = this.msgLayer.getContext("2d");
@@ -116,7 +116,7 @@ export class Renderer {
     }
     for (const t of tokens) t.delay = (t.d / maxD) * 750;
     this.msg = {
-      tokens, size, caption, lang,
+      tokens, size, caption, lang, dir,
       font: fontString(size),
       start: performance.now(),
       state: "in",
@@ -166,7 +166,7 @@ export class Renderer {
     c.font = m.font;
     c.textAlign = "left";
     c.textBaseline = "alphabetic";
-    c.direction = "ltr";
+    c.direction = m.dir;
     const cx = this.mask.cx, cy = this.mask.cy - 1.5 * this.mask.scale;
     const backOut = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
     for (const tk of m.tokens) {

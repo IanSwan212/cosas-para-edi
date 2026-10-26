@@ -719,6 +719,221 @@ const MESSAGES = {
       "Kukupenda jinsi ninavyokupenda",
       "Nakupenda majini, katika kina kirefu zaidi, kwenye mnara wa taa usiku wa manane"
     ]
+  },
+  // Desde aquí: formas de hombre a hombre donde el idioma marca género.
+  ar: {
+    dir: "rtl",
+    chorus: "أحبك كثيرًا",
+    lines: [
+      "أحبك كثيرًا، أحب صداقتنا",
+      "وأحب أيضًا كل جزء منك",
+      "أحب شعرك، عضلاتك، روح الدعابة لديك، أسنانك التي تشبه أنياب مصاص الدماء، رائحتك",
+      "خصوصًا عندما لا تستحم",
+      "أحب عندما تتأثر وتمتلئ عيناك بالدموع",
+      "أحب طيبتك، ثقتك بنفسك، أحب طريقة أكلك",
+      "أحب قدميك، يديك، سرّتك، رقبتك",
+      "أكثر ما أحبه في الحياة هو أن أراك تبتسم",
+      "بتلك الابتسامة الجميلة التي ترسمها عندما ترفع كتفيك",
+      "وتميل رأسك جانبًا وتغمض عينيك",
+      "أكثر ما أحبه في الحياة هو ابتسامتك",
+      "فكرت الآن أنه لم يبقَ سوى أيام قليلة حتى أراك",
+      "وأخيرًا ألمسك وأشم رائحتك",
+      "أظن أنه أجمل ما يمكن أن أعيشه في الحياة",
+      "أن أحبك كما أحبك",
+      "أحبك في الماء، في أعمق الأعماق، عند المنارة في منتصف الليل"
+    ]
+  },
+  he: {
+    dir: "rtl",
+    chorus: "אני כל כך אוהב אותך",
+    lines: [
+      "אני כל כך אוהב אותך, אני אוהב את החברות שלנו",
+      "אני גם אוהב כל חלק בך",
+      "אני אוהב את השיער שלך, את השרירים שלך, את ההומור שלך, את שיני הערפד שלך, את הריח שלך",
+      "במיוחד כשאתה לא מתקלח",
+      "אני אוהב כשאתה מתרגש והעיניים שלך מתמלאות בדמעות",
+      "אני אוהב את טוב הלב שלך, את הביטחון שלך, אני אוהב איך שאתה אוכל",
+      "אני אוהב את כפות הרגליים שלך, את הידיים שלך, את הטבור שלך, את הצוואר שלך",
+      "מה שאני הכי אוהב בחיים זה לראות אותך מחייך",
+      "עם החיוך היפה הזה שאתה עושה כשאתה מושך בכתפיים",
+      "ומטה את הראש הצידה ועוצם את העיניים",
+      "מה שאני הכי אוהב בחיים זה החיוך שלך",
+      "בדיוק עכשיו חשבתי שנשארו רק כמה ימים עד שאראה אותך",
+      "ושסוף סוף אגע בך ואריח אותך",
+      "אני חושב שזה הדבר הכי יפה שאני יכול לחוות בחיים",
+      "לאהוב אותך כמו שאני אוהב אותך",
+      "אני אוהב אותך במים, במעמקים, במגדלור בחצות"
+    ]
+  },
+  fa: {
+    dir: "rtl",
+    chorus: "خیلی دوستت دارم",
+    lines: [
+      "خیلی دوستت دارم، دوستی‌مان را دوست دارم",
+      "همهٔ وجودت را هم دوست دارم",
+      "موهایت، عضله‌هایت، شوخ‌طبعی‌ات، دندان‌های خون‌آشامی‌ات، بویت را دوست دارم",
+      "مخصوصاً وقتی حمام نکرده‌ای",
+      "دوست دارم وقتی احساساتی می‌شوی و چشم‌هایت پر از اشک می‌شود",
+      "مهربانی‌ات، اعتمادبه‌نفست را دوست دارم، طرز غذا خوردنت را دوست دارم",
+      "پاهایت، دست‌هایت، نافت، گردنت را دوست دارم",
+      "چیزی که در زندگی بیشتر از همه دوست دارم، دیدن لبخندت است",
+      "با آن لبخند قشنگی که می‌زنی وقتی شانه‌هایت را بالا می‌اندازی",
+      "و سرت را کج می‌کنی و چشم‌هایت را می‌بندی",
+      "چیزی که در زندگی بیشتر از همه دوست دارم، لبخند توست",
+      "همین الان فکر کردم که فقط چند روز مانده تا ببینمت",
+      "و بالاخره لمست کنم و بویت را حس کنم",
+      "فکر می‌کنم این زیباترین چیزی است که می‌توانم در زندگی تجربه کنم",
+      "دوست داشتنت آن‌طور که دوستت دارم",
+      "در آب، در عمیق‌ترین جا، کنار فانوس دریایی در نیمه‌شب دوستت دارم"
+    ]
+  },
+  ur: {
+    dir: "rtl",
+    chorus: "مجھے تم سے بہت محبت ہے",
+    lines: [
+      "مجھے تم سے بہت محبت ہے، مجھے ہماری دوستی سے محبت ہے",
+      "مجھے تمہارے ہر حصے سے محبت ہے",
+      "مجھے تمہارے بال، تمہارے پٹھے، تمہارا مزاح، تمہارے ویمپائر جیسے دانت، تمہاری خوشبو پسند ہے",
+      "خاص طور پر جب تم نہاتے نہیں ہو",
+      "مجھے اچھا لگتا ہے جب تم جذباتی ہو جاتے ہو اور تمہاری آنکھیں آنسوؤں سے بھر جاتی ہیں",
+      "مجھے تمہاری نیکی، تمہارا اعتماد پسند ہے، مجھے تمہارے کھانے کا انداز پسند ہے",
+      "مجھے تمہارے پاؤں، تمہارے ہاتھ، تمہاری ناف، تمہاری گردن پسند ہے",
+      "زندگی میں مجھے سب سے زیادہ تمہیں مسکراتے دیکھنا پسند ہے",
+      "اس پیاری مسکراہٹ کے ساتھ جب تم کندھے اچکاتے ہو",
+      "اور سر ایک طرف جھکا کر آنکھیں بند کر لیتے ہو",
+      "زندگی میں مجھے سب سے زیادہ تمہاری مسکراہٹ سے محبت ہے",
+      "ابھی ابھی میں نے سوچا کہ تم سے ملنے میں بس چند دن باقی ہیں",
+      "اور آخرکار میں تمہیں چھو سکوں گا اور تمہاری خوشبو محسوس کر سکوں گا",
+      "مجھے لگتا ہے یہ زندگی کا سب سے خوبصورت تجربہ ہے",
+      "تم سے ایسے محبت کرنا جیسے میں کرتا ہوں",
+      "میں تم سے پانی میں، سب سے گہرائی میں، آدھی رات کو لائٹ ہاؤس پر محبت کرتا ہوں"
+    ]
+  },
+  vi: {
+    chorus: "Mình yêu cậu nhiều lắm",
+    lines: [
+      "Mình yêu cậu nhiều lắm, mình yêu tình bạn của chúng ta",
+      "Mình cũng yêu từng phần của cậu",
+      "Mình yêu tóc cậu, cơ bắp của cậu, sự hài hước của cậu, hàm răng ma cà rồng của cậu, mùi của cậu",
+      "Nhất là khi cậu chưa tắm",
+      "Mình yêu lúc cậu xúc động và đôi mắt rưng rưng nước mắt",
+      "Mình yêu sự tốt bụng, sự tự tin của cậu, mình yêu cách cậu ăn",
+      "Mình yêu đôi chân, đôi tay, cái rốn, cái cổ của cậu",
+      "Điều mình yêu nhất trên đời là được thấy cậu cười",
+      "Với nụ cười đáng yêu ấy khi cậu nhún vai",
+      "Nghiêng đầu sang một bên và nhắm mắt lại",
+      "Điều mình yêu nhất trên đời là nụ cười của cậu",
+      "Vừa nãy mình nghĩ chỉ còn vài ngày nữa là được gặp cậu",
+      "Và cuối cùng được chạm vào cậu và ngửi mùi của cậu",
+      "Mình nghĩ đó là điều đẹp đẽ nhất mình có thể trải qua trong đời",
+      "Được yêu cậu như cách mình yêu cậu",
+      "Mình yêu cậu dưới nước, nơi sâu thẳm nhất, ở ngọn hải đăng lúc nửa đêm"
+    ]
+  },
+  ms: {
+    chorus: "Saya sangat cintakan awak",
+    lines: [
+      "Saya sangat cintakan awak, saya cintakan persahabatan kita",
+      "Saya juga cintakan setiap bahagian diri awak",
+      "Saya cintakan rambut awak, otot awak, jenaka awak, gigi drakula awak, bau awak",
+      "Terutamanya apabila awak tidak mandi",
+      "Saya suka apabila awak terharu dan mata awak bergenang air mata",
+      "Saya cintakan kebaikan awak, keyakinan awak, saya suka cara awak makan",
+      "Saya cintakan kaki awak, tangan awak, pusat awak, leher awak",
+      "Apa yang paling saya cintai dalam hidup ialah melihat awak tersenyum",
+      "Dengan senyuman manis yang awak buat apabila awak mengangkat bahu",
+      "Dan memiringkan kepala lalu memejamkan mata",
+      "Apa yang paling saya cintai dalam hidup ialah senyuman awak",
+      "Baru tadi saya terfikir hanya tinggal beberapa hari lagi sebelum saya berjumpa awak",
+      "Dan akhirnya dapat menyentuh awak dan menghidu bau awak",
+      "Saya rasa itulah perkara paling indah yang boleh saya alami dalam hidup",
+      "Mencintai awak seperti saya mencintai awak",
+      "Saya cintakan awak di dalam air, di tempat paling dalam, di rumah api pada tengah malam"
+    ]
+  },
+  sk: {
+    chorus: "Tak veľmi ťa ľúbim",
+    lines: [
+      "Tak veľmi ťa ľúbim, ľúbim naše priateľstvo",
+      "Ľúbim aj každú časť teba",
+      "Ľúbim tvoje vlasy, tvoje svaly, tvoj humor, tvoje upírie zuby, tvoju vôňu",
+      "Hlavne keď sa neosprchuješ",
+      "Ľúbim, keď sa dojmeš a oči sa ti naplnia slzami",
+      "Ľúbim tvoju dobrotu, tvoju istotu, ľúbim, ako ješ",
+      "Ľúbim tvoje chodidlá, tvoje ruky, tvoj pupok, tvoj krk",
+      "Najviac v živote ľúbim vidieť ťa usmievať sa",
+      "S tým krásnym úsmevom, keď pokrčíš plecami",
+      "Nakloníš hlavu nabok a zavrieš oči",
+      "Najviac v živote ľúbim tvoj úsmev",
+      "Práve som si pomyslel, že zostáva už len pár dní, kým ťa uvidím",
+      "A konečne sa ťa dotknem a zacítim tvoju vôňu",
+      "Myslím, že je to to najkrajšie, čo môžem v živote zažiť",
+      "Ľúbiť ťa tak, ako ťa ľúbim",
+      "Ľúbim ťa vo vode, v najväčšej hĺbke, pri majáku o polnoci"
+    ]
+  },
+  sl: {
+    chorus: "Tako zelo te ljubim",
+    lines: [
+      "Tako zelo te ljubim, ljubim najino prijateljstvo",
+      "Ljubim tudi vsak del tebe",
+      "Ljubim tvoje lase, tvoje mišice, tvoj humor, tvoje vampirske zobe, tvoj vonj",
+      "Še posebej, ko se ne stuširaš",
+      "Ljubim, ko se ganeš in se ti oči napolnijo s solzami",
+      "Ljubim tvojo dobroto, tvojo samozavest, ljubim, kako ješ",
+      "Ljubim tvoja stopala, tvoje roke, tvoj popek, tvoj vrat",
+      "Kar najbolj ljubim v življenju, je videti te nasmejanega",
+      "S tistim lepim nasmehom, ko skomigneš z rameni",
+      "Nagneš glavo vstran in zapreš oči",
+      "Kar najbolj ljubim v življenju, je tvoj nasmeh",
+      "Ravnokar sem pomislil, da je do najinega snidenja le še nekaj dni",
+      "In da se te končno dotaknem in te povoham",
+      "Mislim, da je to najlepše, kar lahko doživim v življenju",
+      "Ljubiti te tako, kot te ljubim",
+      "Ljubim te v vodi, v največji globini, pri svetilniku ob polnoči"
+    ]
+  },
+  lt: {
+    chorus: "Aš tave taip myliu",
+    lines: [
+      "Aš tave taip myliu, myliu mūsų draugystę",
+      "Myliu ir kiekvieną tavo dalelę",
+      "Myliu tavo plaukus, tavo raumenis, tavo humorą, tavo vampyro dantis, tavo kvapą",
+      "Ypač kai nesi nusiprausęs",
+      "Myliu, kai susigraudini ir tavo akys prisipildo ašarų",
+      "Myliu tavo gerumą, tavo pasitikėjimą savimi, myliu, kaip tu valgai",
+      "Myliu tavo pėdas, tavo rankas, tavo bambą, tavo kaklą",
+      "Labiausiai gyvenime myliu matyti tave besišypsantį",
+      "Su ta gražia šypsena, kai patrauki pečiais",
+      "Palenki galvą į šoną ir užmerki akis",
+      "Labiausiai gyvenime myliu tavo šypseną",
+      "Ką tik pagalvojau, kad liko vos kelios dienos, kol tave pamatysiu",
+      "Ir pagaliau galėsiu tave paliesti ir užuosti",
+      "Manau, tai gražiausia, ką galiu patirti gyvenime",
+      "Mylėti tave taip, kaip tave myliu",
+      "Myliu tave vandenyje, giliausioje gelmėje, prie švyturio vidurnaktį"
+    ]
+  },
+  lv: {
+    chorus: "Es tevi tik ļoti mīlu",
+    lines: [
+      "Es tevi tik ļoti mīlu, es mīlu mūsu draudzību",
+      "Es mīlu arī katru tavu daļiņu",
+      "Es mīlu tavus matus, tavus muskuļus, tavu humoru, tavus vampīra zobus, tavu smaržu",
+      "Īpaši, kad tu neesi mazgājies",
+      "Es mīlu, kad tu aizkusti un tavas acis piepildās ar asarām",
+      "Es mīlu tavu labsirdību, tavu pašpārliecību, es mīlu to, kā tu ēd",
+      "Es mīlu tavas pēdas, tavas rokas, tavu nabu, tavu kaklu",
+      "Visvairāk dzīvē es mīlu redzēt tevi smaidām",
+      "Ar to skaisto smaidu, kad tu parausti plecus",
+      "Noliec galvu uz sāniem un aizver acis",
+      "Visvairāk dzīvē es mīlu tavu smaidu",
+      "Tikko iedomājos, ka līdz mūsu tikšanās reizei atlikušas tikai dažas dienas",
+      "Un beidzot varēšu tev pieskarties un sajust tavu smaržu",
+      "Domāju, ka tas ir skaistākais, ko varu piedzīvot dzīvē",
+      "Mīlēt tevi tā, kā es tevi mīlu",
+      "Es mīlu tevi ūdenī, visdziļākajā dziļumā, pie bākas pusnaktī"
+    ]
   }
 };
 
@@ -729,6 +944,7 @@ export function getMessage(langId) {
   return {
     lang: translated ? langId : "es",
     translated: !!translated,
+    dir: msg.dir || "ltr",
     lines: msg.lines.concat(Array(CHORUS_REPEATS).fill(msg.chorus))
   };
 }

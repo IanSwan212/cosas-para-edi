@@ -166,7 +166,7 @@ export function layoutHeart({ mask, translations, measure, baseSize, rng, finalM
  * con forma. Busca por bisección el mayor tamaño de fuente con el que todo cabe.
  * Respeta la zona central reservada para «TE AMO».
  */
-export function layoutMessage({ mask, lines, chorusFrom, lang, measure, reserved, minSize = 5, maxSize = 34 }) {
+export function layoutMessage({ mask, lines, chorusFrom, lang, measure, reserved, rtl = false, minSize = 5, maxSize = 34 }) {
   const seg = typeof Intl !== "undefined" && Intl.Segmenter ? new Intl.Segmenter(lang, { granularity: "word" }) : null;
   const tokens = [];
   lines.forEach((line, li) => {
@@ -203,25 +203,27 @@ export function layoutMessage({ mask, lines, chorusFrom, lang, measure, reserved
           if (reserved.x1 < b) segs.push([reserved.x1, b]);
         } else segs.push([a, b]);
       }
-      for (const [a, b] of segs) {
-        let x = a + inset;
+      // En escrituras de derecha a izquierda, cada fila se llena desde el borde derecho.
+      for (const [a, b] of rtl ? segs.slice().reverse() : segs) {
+        let x = rtl ? b - inset : a + inset;
         let lineStart = true;
         while (more(ti)) {
           const t = tokAt(ti);
           if (t.space && lineStart) { ti++; continue; }
           const m = measure(t.text, size);
           let ok = false;
-          while (x + m.width <= b - inset) {
-            if (mask.boxInside(x, y0 + rowH * 0.12, x + m.width, y1 - rowH * 0.12, 0)) { ok = true; break; }
-            x += size * 0.4;
+          let x0 = rtl ? x - m.width : x;
+          while (rtl ? x0 >= a + inset : x0 + m.width <= b - inset) {
+            if (mask.boxInside(x0, y0 + rowH * 0.12, x0 + m.width, y1 - rowH * 0.12, 0)) { ok = true; break; }
+            x0 += rtl ? -size * 0.4 : size * 0.4;
           }
           if (!ok) {
             // Un separador que no cabe no debe bloquear el resto de la fila.
             if (t.space) { ti++; continue; }
             break;
           }
-          if (!t.space || t.sep) placed.push({ text: t.text, kind: t.sep ? "sep" : t.kind, x, w: m.width, baseline: y0 + (rowH - m.height) / 2 + m.ascent, cy: (y0 + y1) / 2 });
-          x += m.width;
+          if (!t.space || t.sep) placed.push({ text: t.text, kind: t.sep ? "sep" : t.kind, x: x0, w: m.width, baseline: y0 + (rowH - m.height) / 2 + m.ascent, cy: (y0 + y1) / 2 });
+          x = rtl ? x0 : x0 + m.width;
           lineStart = false;
           ti++;
         }
