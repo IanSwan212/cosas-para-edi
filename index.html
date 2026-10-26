@@ -25,7 +25,6 @@
     <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
     <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6.5 16l4-4.5 3 3 2-2 2.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6.5" width="12.5" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 10.5l5.5-3v9l-5.5-3z" fill="currentColor"/></symbol>
-    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 7h11M9 12h11M9 17h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="5" cy="7" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/><circle cx="5" cy="17" r="1.2" fill="currentColor"/></symbol>
   </svg>
 
   <nav id="controls" class="controls" aria-label="Controles de la animación">
@@ -35,20 +34,11 @@
     <span class="sep" aria-hidden="true"></span>
     <button id="btn-png" type="button" aria-label="Guardar imagen PNG" title="Guardar imagen"><svg><use href="#i-image"/></svg></button>
     <button id="btn-video" type="button" aria-label="Exportar vídeo" title="Exportar vídeo"><svg><use href="#i-video"/></svg></button>
-    <button id="btn-list" type="button" aria-label="Ver lista de idiomas" title="Idiomas"><svg><use href="#i-list"/></svg></button>
     <button id="btn-fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa (F)"><svg><use href="#i-full"/></svg></button>
   </nav>
 
   <div class="rec-indicator" aria-hidden="true">REC</div>
 
-  <dialog id="languages" aria-labelledby="languages-title">
-    <header>
-      <h2 id="languages-title">«Te amo» en <span id="language-count"></span> idiomas</h2>
-      <button id="close-languages" type="button" aria-label="Cerrar">×</button>
-    </header>
-    <p class="disclaimer">Traducciones pendientes de verificación por hablantes nativos. Ver TRANSLATIONS.md.</p>
-    <ul id="language-list"></ul>
-  </dialog>
 
   <div id="message-live" class="sr-only" aria-live="polite"></div>
 

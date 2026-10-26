@@ -84,7 +84,7 @@ function buildScene() {
 /* ---------- Controles ---------- */
 const btn = {
   play: $("btn-play"), restart: $("btn-restart"), sound: $("btn-sound"),
-  full: $("btn-fullscreen"), png: $("btn-png"), video: $("btn-video"), list: $("btn-list")
+  full: $("btn-fullscreen"), png: $("btn-png"), video: $("btn-video")
 };
 
 function syncPlayButton() {
@@ -156,11 +156,7 @@ if (CONFIG.exportEnabled) {
   btn.png.hidden = btn.video.hidden = true;
 }
 
-// Lista accesible de traducciones
-const dialog = $("languages");
-const list = $("language-list");
-const sorted = TRANSLATIONS.slice().sort((a, b) => a.language.localeCompare(b.language));
-$("language-count").textContent = String(TRANSLATIONS.length);
+// Mensaje dentro del corazón
 const live = $("message-live");
 let messageFor = undefined; // entrada de idioma, null = «TE AMO» (original), undefined = sin mensaje
 let pumping = false;
@@ -202,28 +198,9 @@ function showMessage(t) {
   startPump();
 }
 
-for (const t of sorted) {
-  const li = document.createElement("li");
-  const item = document.createElement("button");
-  item.type = "button";
-  item.addEventListener("click", () => { dialog.close(); showMessage(t); });
-  li.appendChild(item);
-  const phrase = document.createElement("span");
-  phrase.className = "phrase";
-  phrase.lang = t.id;
-  phrase.dir = t.direction;
-  phrase.textContent = t.text;
-  const meta = document.createElement("span");
-  meta.className = "meta";
-  meta.textContent = `${t.language} · ${t.nativeName}${t.note ? ` — ${t.note}` : ""}`;
-  item.append(phrase, meta);
-  list.appendChild(li);
-}
-btn.list.addEventListener("click", () => dialog.showModal());
-$("close-languages").addEventListener("click", () => dialog.close());
 
 window.addEventListener("keydown", (e) => {
-  if (dialog.open || e.target.closest?.("button") && (e.key === " " || e.key === "Enter")) return;
+  if (e.target.closest?.("button") && (e.key === " " || e.key === "Enter")) return;
   const k = e.key.toLowerCase();
   if (k === "escape" && renderer.messageActive) return showMessage(undefined);
   if (k === " ") { e.preventDefault(); togglePlay(); }
