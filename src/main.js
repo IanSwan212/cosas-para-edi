@@ -267,6 +267,11 @@ async function start() {
   await loadFonts(TRANSLATIONS.map((t) => t.text).concat(CONFIG.finalMessage, "·—", messageText));
   document.documentElement.style.setProperty("--font-stack", FONT_STACK);
   buildScene();
+  // Si la ventana aún no tenía tamaño (pestaña o vista abriéndose), el corazón sale vacío: se reintenta.
+  for (let i = 0; i < 10 && renderer.particles.length === 0; i++) {
+    await new Promise((r) => setTimeout(r, 300));
+    buildScene();
+  }
   document.body.classList.add("ready");
   if (reducedMotion.matches) applyReducedMotion();
   else controller.play();
