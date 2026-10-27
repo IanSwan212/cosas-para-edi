@@ -24,7 +24,8 @@ cúpula redonda y cada una mira hacia fuera, así que se ven bien desde todos lo
 ## Enlaces en las flores
 
 Cada flor puede abrir un sitio. Se configuran en `src/links.js` (número de flor → `{ url, title }`).
-Al pasar el cursor aparece el título y la fecha de la flor; con un clic o un toque se abre el enlace.
+Al pasar el cursor aparece una tarjeta con la vista previa del sitio (imagen `preview`), su título y la fecha
+de la flor; con un clic se abre. En pantallas táctiles, el primer toque muestra la tarjeta y su botón «Abrir».
 Arrastrar para girar no cuenta como clic. Ahora mismo, la flor 1 (26 de octubre) abre el corazón
 «Te amo en todos los idiomas».
 

@@ -70,21 +70,48 @@ body.fade-in #scene { animation: bouquet-in 1.4s ease both; }
 }
 .sim-badge[hidden] { display: none; }
 
-.flower-label {
+/* Vista previa del enlace de una flor */
+.flower-card {
   position: fixed;
   left: 0;
   top: 0;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgba(18, 10, 14, 0.85);
-  border: 1px solid rgba(255, 123, 152, 0.4);
+  width: 220px;
+  padding: 8px 8px 10px;
+  border-radius: 14px;
+  background: rgba(14, 8, 11, 0.92);
+  border: 1px solid rgba(255, 123, 152, 0.45);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   color: var(--ink);
-  font-size: 15px;
-  font-style: italic;
-  white-space: nowrap;
+  text-align: center;
   pointer-events: none;
+  animation: card-in 0.2s ease;
 }
-.flower-label[hidden] { display: none; }
+.flower-card[hidden] { display: none; }
+.flower-card.touch { pointer-events: auto; }
+.flower-card-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 15 / 14;
+  object-fit: cover;
+  border-radius: 9px;
+  background: #000;
+}
+.flower-card-title { margin: 8px 0 0; font-size: 17px; font-style: italic; }
+.flower-card-date { margin: 2px 0 0; font-size: 13px; color: var(--ink-dim); }
+.flower-card-open {
+  display: none;
+  margin-top: 8px;
+  padding: 6px 0;
+  border-radius: 999px;
+  background: rgba(255, 123, 152, 0.18);
+  border: 1px solid rgba(255, 123, 152, 0.5);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  text-decoration: none;
+}
+.flower-card.touch .flower-card-open { display: block; }
+@keyframes card-in { from { opacity: 0; transform: translateY(4px); } }
 
 .final {
   position: fixed;
