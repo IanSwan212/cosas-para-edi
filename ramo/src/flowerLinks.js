@@ -1,8 +1,8 @@
 // Clic o toque sobre una flor abierta: abre su enlace. Un arrastre (girar el
 // ramo) no cuenta como clic.
 import * as THREE from "three";
-import { LINKS } from "./links.js?v=mvq4ne1g";
-import { dateForFlower, formatDate } from "./calendar.js?v=mvq4ne1g";
+import { LINKS } from "./links.js?v=mvq4pv5s";
+import { dateForFlower, formatDate } from "./calendar.js?v=mvq4pv5s";
 
 export function setupFlowerLinks({ canvas, camera, group, label }) {
   const raycaster = new THREE.Raycaster();

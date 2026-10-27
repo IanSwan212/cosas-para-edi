@@ -1,11 +1,11 @@
-import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4ne1g";
-import { createProgress } from "./progress.js?v=mvq4ne1g";
-import { FLOWERS } from "./flowerDefs.js?v=mvq4ne1g";
-import { createScene, createBouquet } from "./bouquet.js?v=mvq4ne1g";
-import { renderText, showFinal } from "./ui.js?v=mvq4ne1g";
-import { AsciiView } from "./asciiView.js?v=mvq4ne1g";
+import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4pv5s";
+import { createProgress } from "./progress.js?v=mvq4pv5s";
+import { FLOWERS } from "./flowerDefs.js?v=mvq4pv5s";
+import { createScene, createBouquet } from "./bouquet.js?v=mvq4pv5s";
+import { renderText, showFinal } from "./ui.js?v=mvq4pv5s";
+import { AsciiView } from "./asciiView.js?v=mvq4pv5s";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4ne1g";
+import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4pv5s";
 
 const canvas = document.getElementById("scene");
 
@@ -53,6 +53,8 @@ function fitAll() {
 }
 fitAll();
 window.addEventListener("resize", fitAll);
+// Si la página cargó sin tamaño (pestaña en segundo plano), encuadrar al hacerse visible.
+document.addEventListener("visibilitychange", () => { if (!document.hidden) fitAll(); });
 setupFlowerLinks({ canvas, camera, group, label: document.getElementById("flower-label") });
 // Doble clic / doble toque: volver a la vista frontal.
 canvas.addEventListener("dblclick", () => {

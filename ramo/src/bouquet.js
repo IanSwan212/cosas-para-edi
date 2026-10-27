@@ -6,7 +6,7 @@
 // la cima y baja: con pocas flores el ramo ya está centrado, y cada flor nueva
 // se suma alrededor a otra altura.
 import * as THREE from "three";
-import { createFlower } from "./flower.js?v=mvq4ne1g";
+import { createFlower } from "./flower.js?v=mvq4pv5s";
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 export const TIE = new THREE.Vector3(0, 0.25, 0); // punto donde convergen los tallos
@@ -93,6 +93,8 @@ export function createScene(canvas) {
   scene.add(bouquet);
 
   function resize(width, height, { sizeRenderer = true } = {}) {
+    // Pestaña abierta en segundo plano: aún no hay tamaño; se reintenta al llegar el evento resize.
+    if (!(width > 0 && height > 0)) return;
     if (sizeRenderer) {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(width, height, false);
@@ -108,7 +110,7 @@ export function createScene(canvas) {
     view.target.set(0, mobile ? 2.45 : 2.55, 0);
     view.distance = dist;
     // Solo la primera vez se coloca la cámara; después la mueve el usuario.
-    if (!view.placed) {
+    if (!view.placed || !Number.isFinite(camera.position.x + camera.position.y + camera.position.z)) {
       camera.position.set(0, 3.6, dist); // casi de frente, apenas desde arriba
       camera.lookAt(view.target);
       view.placed = true;
