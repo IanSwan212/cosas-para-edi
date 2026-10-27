@@ -18,7 +18,7 @@ const PROFILES = {
  * cup: curvatura transversal (bordes hacia dentro); curl: la punta se dobla hacia fuera (+Z).
  */
 export function petalGeometry({ length = 1, width = 0.4, cup = 0.4, curl = 0, profile = "pointed",
-  base = "#ff0000", tip = "#ffffff", nu = 14, nv = 8, notch = 0, ruffle = 0, spots = false }) {
+  base = "#ff0000", tip = "#ffffff", nu = 16, nv = 16, notch = 0, ruffle = 0, spots = false, veins = 0.22 }) {
   const prof = PROFILES[profile];
   const pos = [], col = [], idx = [];
   const cBase = new THREE.Color(base), cTip = new THREE.Color(tip);
@@ -41,6 +41,8 @@ export function petalGeometry({ length = 1, width = 0.4, cup = 0.4, curl = 0, pr
         if (Math.abs(v) < 0.2 && u > 0.1) tmp.multiplyScalar(0.72);
         if (u > 0.12 && u < 0.5 && (i * 7 + j * 13) % 11 === 0) tmp.multiplyScalar(0.45);
       }
+      // Vetas longitudinales, visibles en los pétalos de la referencia.
+      if (veins) tmp.multiplyScalar(1 - veins * (0.5 - 0.5 * Math.cos(v * Math.PI * 7)) * Math.sqrt(u));
       col.push(tmp.r, tmp.g, tmp.b);
     }
   }

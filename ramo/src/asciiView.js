@@ -54,11 +54,14 @@ const FRAG = /* glsl */ `
     float mask = texture2D(tGlyphs, vec2((idx + local.x) / glyphs, local.y)).r;
     // Los caracteres tienen poca superficie: el color se lleva a su brillo máximo
     // (conservando el tono) y la luminosidad se expresa con la densidad del glifo.
+    // Se conserva el sombreado (puntas claras, garganta y vetas oscuras) y se
+    // realza el brillo y la saturación para que el texto parezca luminoso.
     float peak = max(max(col.r, col.g), col.b);
-    vec3 bright = col / max(peak, 0.001) * mix(0.55, 1.0, smoothstep(0.05, 0.6, lum));
+    vec3 hue = col / max(peak, 0.001);
+    vec3 bright = mix(min(col * 1.75, vec3(1.0)), hue * min(1.0, peak * 1.6), 0.45);
     // Fondo tenue del mismo color detrás del carácter: el pétalo se lee como una
     // superficie de texto, igual que en el video.
-    gl_FragColor = vec4(bright * mask + col * 0.42 * (1.0 - mask), 1.0);
+    gl_FragColor = vec4(min(bright * (0.38 + 1.05 * mask), vec3(1.0)), 1.0);
   }
 `;
 
@@ -89,8 +92,8 @@ export class AsciiView {
 
   resize(width, height) {
     const dpr = this.renderer.getPixelRatio();
-    // Celdas finas, como el video: unos 160 caracteres en el lado corto.
-    const cellH = Math.max(4.5, Math.min(8, Math.min(width, height) / 150)) * dpr;
+    // Celdas muy finas, como en la referencia: ~200 caracteres en el lado corto.
+    const cellH = Math.max(3.6, Math.min(6, Math.min(width, height) / 200)) * dpr;
     const cellW = cellH * 0.62;
     const cols = Math.ceil((width * dpr) / cellW);
     const rows = Math.ceil((height * dpr) / cellH);

@@ -53,8 +53,8 @@ function buildHead(cfg) {
   switch (cfg.species) {
     case "lily": {
       // Estrella de seis pétalos vista de frente, como los lirios del video.
-      const geoOuter = petalGeometry({ length: 1.08 * s, width: 0.36 * s, cup: 0.5, curl: 0.22, profile: "pointed", base, tip, spots: true });
-      const geoInner = petalGeometry({ length: 1.0 * s, width: 0.42 * s, cup: 0.55, curl: 0.2, profile: "pointed", base, tip, ruffle: 0.6, spots: true });
+      const geoOuter = petalGeometry({ length: 1.08 * s, width: 0.36 * s, cup: 0.5, curl: 0.22, profile: "pointed", base, tip, spots: true, veins: 0.35 });
+      const geoInner = petalGeometry({ length: 1.0 * s, width: 0.42 * s, cup: 0.55, curl: 0.2, profile: "pointed", base, tip, ruffle: 0.6, spots: true, veins: 0.35 });
       petals.push(...ring(head, geoOuter, { count: 3, closed: 5 * DEG, open: 80 * DEG, phase: cfg.spin }));
       petals.push(...ring(head, geoInner, { count: 3, closed: 3 * DEG, open: 74 * DEG, phase: cfg.spin + Math.PI / 3, delay: 0.06 }));
       // Estambres con anteras.

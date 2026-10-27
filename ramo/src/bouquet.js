@@ -45,8 +45,8 @@ export function createScene(canvas) {
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
 
   // Iluminación suave: cielo cálido, luz principal, contraluz frío y relleno.
-  scene.add(new THREE.HemisphereLight("#fff1f4", "#0b1a0d", 0.85));
-  const key = new THREE.DirectionalLight("#fff4e6", 2.1);
+  scene.add(new THREE.HemisphereLight("#fff1f4", "#0b1a0d", 1.05));
+  const key = new THREE.DirectionalLight("#fff4e6", 2.6);
   key.position.set(-3, 6, 7);
   scene.add(key);
   const rim = new THREE.DirectionalLight("#b8c8ff", 1.1);
