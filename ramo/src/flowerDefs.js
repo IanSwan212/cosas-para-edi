@@ -13,29 +13,33 @@ function rng(seed) {
   };
 }
 
-// [color base (garganta), color de la punta]. Los tonos de los lirios del video:
-// rojos, rosas y magentas, blancos y cremas, amarillos, duraznos y vinos.
+// [color base (cerca del centro), color de la punta]
 export const PALETTE = {
-  red: ["#8a0b12", "#ef2b2b"], scarlet: ["#9c1408", "#ff4a2e"], crimson: ["#6e0418", "#d81b3c"],
-  cherry: ["#7d0a2a", "#e0334f"], ruby: ["#5a0610", "#b8142a"],
-  magenta: ["#8c0f5e", "#e64fb0"], orchid: ["#9a2f86", "#f08ad6"], rose: ["#b3264f", "#f47a9b"],
-  pink: ["#c24a78", "#ffa3c4"], fuchsia: ["#a0105a", "#ff5aa8"], blush: ["#d98aa0", "#fde1ea"],
-  white: ["#d9d0c0", "#fffdf8"], cream: ["#d9c48f", "#fff4d6"], ivory: ["#cbbfa4", "#fffaf0"],
-  pearl: ["#d6c9cf", "#fff7fb"], linen: ["#c9b49a", "#fff0e0"],
-  yellow: ["#c98a06", "#ffe04a"], butter: ["#d9a514", "#fff08a"], gold: ["#b8620a", "#ffbe2e"],
-  lemon: ["#b9a10c", "#fff36a"], amber: ["#b45309", "#ffb347"],
-  peach: ["#d9764f", "#ffd0b0"], salmon: ["#c9514f", "#ffaa98"], apricot: ["#c96a24", "#ffc38c"],
-  coral: ["#cc3f35", "#ff9178"], tangerine: ["#c2410c", "#ff8f4a"],
-  wine: ["#4d0617", "#9e1a35"], burgundy: ["#3f0a18", "#8a1c3a"], mauve: ["#7a4a5a", "#d9a8b8"]
+  crimson: ["#7a0619", "#e2213f"],
+  rose: ["#b3264f", "#f47a9b"],
+  blush: ["#e7a3b4", "#fde3ea"],
+  white: ["#e9e1d3", "#fffdf8"],
+  butter: ["#e0a412", "#ffe27a"],
+  gold: ["#c46a05", "#ffb52e"],
+  coral: ["#d9483b", "#ff9a7d"],
+  peach: ["#e8875f", "#ffd2b3"],
+  violet: ["#4b1d73", "#9d5bd2"],
+  lavender: ["#8a77c9", "#d9cdf7"],
+  sky: ["#2f5fb3", "#8fb8ff"],
+  magenta: ["#8c0f5e", "#e04aa6"],
+  cream: ["#e9d6a4", "#fff6dc"],
+  wine: ["#4d0617", "#a3152f"]
 };
 
-// Como en el video, todas son lirios: cada uno con su color, tamaño y giro.
-// Orden pensado para la composición: las primeras (centro del ramo) son las más grandes
-// y los colores se alternan para que no se junten dos tonos parecidos.
-const ORDER = ["red", "white", "magenta", "yellow", "peach", "crimson", "cream", "pink", "gold", "wine",
-  "ivory", "scarlet", "orchid", "salmon", "butter", "rose", "linen", "cherry", "apricot", "blush",
-  "lemon", "burgundy", "pearl", "coral", "fuchsia", "amber", "mauve", "tangerine", "ruby"];
-const PLAN = ORDER.map((c) => ["lily", c]);
+// Orden pensado para la composición: las primeras flores (centro) son grandes.
+const PLAN = [
+  ["lily", "crimson"], ["rose", "blush"], ["lily", "white"], ["tulip", "coral"], ["dahlia", "magenta"],
+  ["lily", "butter"], ["rose", "crimson"], ["anemone", "white"], ["daisy", "white"], ["lily", "rose"],
+  ["cosmos", "lavender"], ["tulip", "butter"], ["cluster", "sky"], ["rose", "peach"], ["dahlia", "gold"],
+  ["anemone", "violet"], ["lily", "peach"], ["daisy", "blush"], ["cosmos", "magenta"], ["tulip", "wine"],
+  ["cluster", "lavender"], ["rose", "cream"], ["lily", "coral"], ["daisy", "butter"], ["anemone", "sky"],
+  ["dahlia", "blush"], ["cluster", "white"], ["tulip", "violet"], ["rose", "rose"]
+];
 
 const CENTER = {
   lily: "#5a2a08", rose: null, tulip: "#1c1208", dahlia: "#f2c14e", daisy: "#f2b705",
@@ -67,8 +71,6 @@ export const FLOWERS = PLAN.map(([species, colorName], i) => {
     leafTwist: r() * Math.PI * 2,
     tilt: (r() - 0.5) * 0.35,
     spin: r() * Math.PI * 2,
-    phase: r() * Math.PI * 2,
-    // Los capullos se abren uno tras otro, como en el video.
-    bloomDelay: r() * 0.14
+    phase: r() * Math.PI * 2
   };
 });

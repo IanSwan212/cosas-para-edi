@@ -11,7 +11,7 @@ Un ramo en 3D que gana una flor cada día, del **26 de octubre** al **23 de novi
 Como el video de referencia («ASCII Lily Bouquet»), el ramo se dibuja como **arte ASCII de colores**:
 la escena 3D se renderiza a una textura con un píxel por carácter, y un shader dibuja en cada celda
 un glifo elegido por luminosidad y coloreado con el color de esa zona (`src/asciiView.js`). Predominan
-los **lirios**: las 29 flores lo son, cada una de un color.
+flores mezcladas: lirios, rosas, tulipanes, dalias, margaritas, anémonas, cosmos y ramilletes.
 Con `?modo=3d` se ve el render 3D sin el efecto ASCII.
 
 ## Modo de prueba
@@ -59,7 +59,7 @@ Con `?modo=3d` se ve el render 3D sin el efecto ASCII.
 | `src/main.js` | Orquestación y bucle de render |
 | `tests/calendar.test.mjs` | Pruebas unitarias |
 
-Como en el video, las 29 flores son lirios, cada uno con su color, tamaño, giro y momento de apertura. El código conserva también rosa, tulipán, dalia, margarita, anémona, cosmos y ramillete, por si se quieren mezclar.
+Las especies son lirio, rosa, tulipán, dalia, margarita, anémona, cosmos y ramillete de florecillas.
 
 **Dependencia añadida:** Three.js 0.160.0 desde unpkg, mediante un *import map*. Hace falta WebGL para
 dar volumen real a pétalos y hojas. No requiere instalar nada ni un paso de compilación.

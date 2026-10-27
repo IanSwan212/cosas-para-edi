@@ -12,7 +12,7 @@ export const TIE = new THREE.Vector3(0, 0.25, 0.1); // punto donde convergen los
 
 export function computeSlots(flowers) {
   const N = flowers.length;
-  const rx = 1.6, ry = 2.45, cy = 3.25, depth = 1.15;
+  const rx = 1.95, ry = 2.05, cy = 3.0, depth = 1.15;
   // Foco lejano detrás del ramo: las flores miran casi de frente, como en el video.
   const focus = new THREE.Vector3(0, cy - 0.9, -5.5);
   return flowers.map((cfg, i) => {
@@ -66,14 +66,14 @@ export function createScene(canvas) {
     }
     camera.aspect = width / height;
     // Encuadre: el ramo completo (alto ≈ 7.6, ancho ≈ 5.2) cabe en cualquier proporción.
-    const h = 8.4, w = 5.3;
+    const h = 7.7, w = 5.3;
     const vfov = (camera.fov * Math.PI) / 180;
     const distH = h / 2 / Math.tan(vfov / 2);
     const distW = w / 2 / (Math.tan(vfov / 2) * camera.aspect);
     const dist = Math.max(distH, distW);
     const mobile = camera.aspect < 0.8;
     camera.position.set(0, 2.5, dist + 0.6);
-    camera.lookAt(0, mobile ? 2.75 : 2.85, 0);
+    camera.lookAt(0, mobile ? 2.25 : 2.35, 0);
     camera.updateProjectionMatrix();
   }
 
@@ -125,7 +125,7 @@ export function createBouquet(group, flowerDefs) {
     replay(count, now, stagger) {
       for (const [, f] of built) f.setGrowth(0);
       anim.clear();
-      return this.show(count, { now, stagger, duration: 4.2 });
+      return this.show(count, { now, stagger });
     },
     /** Avanza las animaciones; devuelve true si alguna sigue activa. */
     update(now, swayTime, swayAmount) {

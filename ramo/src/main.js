@@ -43,7 +43,7 @@ function showReal({ entry }) {
     bouquet.show(visit.count, { now, instantBelow: visit.count });
   } else if (entry && visit.firstVisit) {
     // Primera apertura: el ramo crece flor a flor, acelerado si son muchas.
-    bouquet.show(visit.count, { now, stagger: Math.min(0.45, 1.6 / Math.max(1, visit.count)), duration: 4.2 });
+    bouquet.show(visit.count, { now, stagger: Math.min(0.5, 7 / Math.max(1, visit.count)), duration: 3 });
   } else if (entry) {
     // Vuelve otro día: las anteriores ya están; solo crecen las pendientes.
     bouquet.show(visit.count, { now, instantBelow: visit.newFrom, stagger: 0.45, duration: 2.8 });
@@ -74,7 +74,7 @@ const panel = setupTestPanel({
   onReplay() {
     const date = simDate || today;
     const count = flowerCountFor(date);
-    bouquet.replay(count, clock() + 0.2, Math.min(0.45, 1.6 / Math.max(1, count)));
+    bouquet.replay(count, clock() + 0.2, Math.min(0.5, 7 / Math.max(1, count)));
     scheduleFinal(date, count);
   }
 });
