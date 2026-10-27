@@ -29,7 +29,9 @@ Arrastrar para girar no cuenta como clic. Ahora mismo, la flor 1 (26 de octubre)
 «Te amo en todos los idiomas».
 
 Para que se puedan tocar bien, las cabezas se separan con una relajación determinista que aleja
-cada par de flores hasta que no se tocan, así que siempre quedan en la misma posición.
+cada par de flores hasta dejar un hueco entre ellas, así que siempre quedan en la misma posición. Están
+repartidas en una banda alrededor del ramo y miran hacia fuera, casi en horizontal: se aprecian de
+frente y de perfil, no solo desde arriba.
 
 ## Modo de prueba
 

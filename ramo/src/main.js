@@ -47,7 +47,7 @@ window.addEventListener("resize", fitAll);
 setupFlowerLinks({ canvas, camera, group, label: document.getElementById("flower-label") });
 // Doble clic / doble toque: volver a la vista frontal.
 canvas.addEventListener("dblclick", () => {
-  camera.position.set(0, 5.2, view.distance);
+  camera.position.set(0, 3.6, view.distance);
   controls.target.copy(view.target);
   controls.update();
 });

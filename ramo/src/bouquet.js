@@ -13,24 +13,26 @@ export const TIE = new THREE.Vector3(0, 0.25, 0); // punto donde convergen los t
 
 export function computeSlots(flowers) {
   const N = flowers.length;
-  const center = new THREE.Vector3(0, 2.6, 0);
-  const rx = 2.55, ry = 2.1, rz = 2.55;
-  const toSurface = (n) => n.normalize();
+  const center = new THREE.Vector3(0, 2.9, 0);
+  const rx = 2.6, ry = 2.5, rz = 2.6;
+  // Banda alrededor del ramo (de ~30° bajo la cima a algo bajo el ecuador): así las
+  // flores miran hacia los lados y se aprecian de frente y de perfil, no solo desde arriba.
+  const cosTop = 0.86, cosBottom = -0.42;
 
-  // 1) Reparto inicial: espiral de Fibonacci desde la cima.
+  // 1) Reparto inicial: espiral de Fibonacci dentro de la banda.
   const normals = flowers.map((cfg, i) => {
     const t = (i + 0.5) / N;
-    const polar = Math.acos(0.95 - t * 1.25); // de la cima a algo bajo el ecuador
+    const c = cosTop - t * (cosTop - cosBottom);
+    const sp = Math.sqrt(1 - c * c);
     const az = i * GOLDEN + 0.6;
-    return new THREE.Vector3(Math.sin(polar) * Math.cos(az), Math.cos(polar), Math.sin(polar) * Math.sin(az));
+    return new THREE.Vector3(sp * Math.cos(az), c, sp * Math.sin(az));
   });
   const onEllipsoid = (n) => new THREE.Vector3(center.x + n.x * rx, center.y + n.y * ry, center.z + n.z * rz);
 
-  // 2) Relajación: cada par de flores se separa hasta que sus cabezas no se tocan
-  //    (radio aproximado = largo del pétalo). Es determinista: siempre el mismo resultado.
-  const radius = flowers.map((cfg) => cfg.size * 1.02 + 0.06);
-  const minCos = -0.45;
-  for (let iter = 0; iter < 400; iter++) {
+  // 2) Relajación determinista: cada par se separa hasta dejar un hueco entre sus
+  //    cabezas (radio ≈ largo del pétalo + margen), para que cada flor tenga su espacio.
+  const radius = flowers.map((cfg) => cfg.size * 1.05 + 0.12);
+  for (let iter = 0; iter < 600; iter++) {
     const push = normals.map(() => new THREE.Vector3());
     for (let i = 0; i < N; i++) {
       const pi = onEllipsoid(normals[i]);
@@ -39,7 +41,7 @@ export function computeSlots(flowers) {
         const d = pi.distanceTo(pj);
         const want = radius[i] + radius[j];
         if (d < want) {
-          const dir = pi.clone().sub(pj).normalize().multiplyScalar(((want - d) / want) * 0.25);
+          const dir = pi.clone().sub(pj).normalize().multiplyScalar(((want - d) / want) * 0.22);
           push[i].add(dir);
           push[j].sub(dir);
         }
@@ -47,16 +49,16 @@ export function computeSlots(flowers) {
     }
     normals.forEach((n, i) => {
       n.add(push[i]);
-      if (n.y < minCos) n.y = minCos; // que ninguna quede debajo del ramo
-      toSurface(n);
+      n.y = Math.min(cosTop, Math.max(cosBottom, n.y));
+      n.normalize();
     });
   }
 
   return flowers.map((cfg, i) => {
     const n = normals[i];
     const head = onEllipsoid(n);
-    // Normal del elipsoide, algo inclinada hacia arriba como en un ramo real.
-    const dir = new THREE.Vector3(n.x / rx, (n.y / ry) * 0.8 + 0.12, n.z / rz).normalize();
+    // Mira hacia fuera, casi horizontal, apenas inclinada hacia arriba.
+    const dir = new THREE.Vector3(n.x / rx, (n.y / ry) * 0.45 + 0.18, n.z / rz).normalize();
     // Tallo: base del manojo → atadura común → curva suave → flor.
     const base = new THREE.Vector3(head.x * 0.05, -1.15, head.z * 0.05);
     const tie = new THREE.Vector3(head.x * 0.06, TIE.y, head.z * 0.06);
@@ -97,17 +99,17 @@ export function createScene(canvas) {
     }
     camera.aspect = width / height;
     // Encuadre: el ramo completo (alto ≈ 7.6, ancho ≈ 5.2) cabe en cualquier proporción.
-    const h = 8.6, w = 6.2;
+    const h = 9.4, w = 7.0;
     const vfov = (camera.fov * Math.PI) / 180;
     const distH = h / 2 / Math.tan(vfov / 2);
     const distW = w / 2 / (Math.tan(vfov / 2) * camera.aspect);
     const dist = Math.max(distH, distW) + 0.6;
     const mobile = camera.aspect < 0.8;
-    view.target.set(0, mobile ? 2.25 : 2.35, 0);
+    view.target.set(0, mobile ? 2.45 : 2.55, 0);
     view.distance = dist;
     // Solo la primera vez se coloca la cámara; después la mueve el usuario.
     if (!view.placed) {
-      camera.position.set(0, 5.2, dist); // un poco desde arriba, como se mira un ramo
+      camera.position.set(0, 3.6, dist); // casi de frente, apenas desde arriba
       camera.lookAt(view.target);
       view.placed = true;
     }
