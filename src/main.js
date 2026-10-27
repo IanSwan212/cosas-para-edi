@@ -190,7 +190,7 @@ function showMessage(t) {
     rtl: msg.dir === "rtl"
   });
   const caption = t
-    ? `${t.language} · ${t.nativeName}${msg.auto ? " · traducción automática" : msg.translated ? "" : " — original en español"}`
+    ? `${t.language} · ${t.nativeName}${msg.translated ? "" : " — original en español"}`
     : "";
   renderer.setMessage({ tokens, size, caption, lang: msg.lang, dir: msg.dir });
   live.lang = msg.lang;
