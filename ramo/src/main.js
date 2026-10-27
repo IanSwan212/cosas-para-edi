@@ -1,8 +1,8 @@
-import { localToday, isComplete, parseISO, flowerCountFor } from "./calendar.js";
+import { localToday, isComplete, parseISO } from "./calendar.js";
 import { createProgress } from "./progress.js";
 import { FLOWERS } from "./flowerDefs.js";
 import { createScene, createBouquet } from "./bouquet.js";
-import { renderText, showFinal, setupTestPanel } from "./ui.js";
+import { renderText, showFinal } from "./ui.js";
 import { AsciiView } from "./asciiView.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { setupFlowerLinks } from "./flowerLinks.js";
@@ -82,30 +82,39 @@ function showReal({ entry }) {
   scheduleFinal(today, visit.count);
 }
 
-/* ---------- Modo de prueba ---------- */
-let simDate = null;
-const urlDate = parseISO(new URLSearchParams(location.search).get("fecha"));
-const wantPanel = new URLSearchParams(location.search).has("prueba");
+/* ---------- Fecha simulada (solo por URL, sin interfaz) ---------- */
+// ?fecha=2026-11-10 muestra el ramo de ese día sin guardar nada (útil para revisar etapas).
+const simDate = parseISO(new URLSearchParams(location.search).get("fecha"));
+if (simDate) {
+  const count = progress.simulate(simDate).count;
+  bouquet.show(count, { now: clock() + 0.4, stagger: Math.min(0.5, 7 / Math.max(1, count)), duration: 3 });
+  renderText({ date: simDate, count, simulated: true });
+  scheduleFinal(simDate, count);
+} else {
+  showReal({ entry: true });
+}
 
-const panel = setupTestPanel({
-  initial: urlDate,
-  onChange(date) {
-    simDate = date;
-    if (!date) return showReal({ entry: false });
-    const count = progress.simulate(date).count;
-    bouquet.show(count, { now: clock(), stagger: 0.18, duration: 2.4 });
-    renderText({ date, count, simulated: true });
-    scheduleFinal(date, count);
-  },
-  onReplay() {
-    const date = simDate || today;
-    const count = flowerCountFor(date);
-    bouquet.replay(count, clock() + 0.2, Math.min(0.5, 7 / Math.max(1, count)));
-    scheduleFinal(date, count);
-  }
-});
-if (wantPanel && !panel.isOpen()) document.getElementById("test-toggle").click();
-if (!simDate) showReal({ entry: true });
+/* ---------- Música de fondo, muy suave ---------- */
+// Los navegadores no dejan sonar sin interacción: empieza con el primer toque, clic o tecla.
+const music = new Audio("assets/cancion.mp3");
+music.loop = true;
+music.volume = 0;
+const MUSIC_VOLUME = 0.12;
+function startMusic() {
+  window.removeEventListener("pointerdown", startMusic, true);
+  window.removeEventListener("keydown", startMusic, true);
+  music.play().then(() => {
+    const t0 = performance.now();
+    const fade = () => {
+      const k = Math.min(1, (performance.now() - t0) / 4000);
+      music.volume = MUSIC_VOLUME * k;
+      if (k < 1) requestAnimationFrame(fade);
+    };
+    fade();
+  }).catch(() => {});
+}
+window.addEventListener("pointerdown", startMusic, true);
+window.addEventListener("keydown", startMusic, true);
 
 /* ---------- Bucle ---------- */
 let last = 0;

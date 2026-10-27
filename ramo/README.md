@@ -33,14 +33,15 @@ cada par de flores hasta dejar un hueco entre ellas, así que siempre quedan en 
 repartidas en una banda alrededor del ramo y miran hacia fuera, casi en horizontal: se aprecian de
 frente y de perfil, no solo desde arriba.
 
-## Modo de prueba
+## Revisar otra fecha
 
-- Pulsa el icono de calendario (esquina inferior derecha) o la tecla **P**.
-- O abre la página con `?prueba` (panel abierto) o `?fecha=2026-11-10` (simula esa fecha directamente).
-- El deslizador va del 25 de octubre (0 flores) al 24 de noviembre (29 flores).
-- «Repetir crecimiento» vuelve a animar el ramo desde cero. «Volver a la fecha real» cierra la simulación.
-- Mientras simulas, se ve la etiqueta «Simulación · no es la fecha real». La simulación no lee ni escribe
-  el almacenamiento y no toca la fecha del sistema.
+Ya no hay panel de pruebas visible. Para revisar una etapa, abre la página con `?fecha=2026-11-10`
+(o cualquier fecha). Se mostrará el ramo de ese día con la etiqueta «Simulación», sin guardar nada.
+
+## Música
+
+De fondo suena `assets/cancion.mp3` en bucle, a volumen muy bajo (12 %), con una entrada suave.
+Empieza con el primer toque, clic o tecla, porque los navegadores no dejan reproducir sonido antes.
 
 ## Cómo se calcula el número de flores
 
