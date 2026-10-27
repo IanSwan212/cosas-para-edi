@@ -103,6 +103,29 @@ body.fade-in #scene { animation: bouquet-in 1.4s ease both; }
 }
 .final.visible { opacity: 1; transform: none; }
 
+.mute {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.mute:hover, .mute:focus-visible { opacity: 0.9; }
+.mute:focus-visible { outline: 1px solid var(--accent); }
+.mute svg { width: 22px; height: 22px; }
+.mute .cross { display: none; }
+.mute[aria-pressed="true"] .waves { display: none; }
+.mute[aria-pressed="true"] .cross { display: inline; }
+
 @media (prefers-reduced-motion: reduce) {
   body.fade-in #scene { animation: none; }
   .flower-label {
