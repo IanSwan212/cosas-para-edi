@@ -40,7 +40,7 @@ Ya no hay panel de pruebas visible. Para revisar una etapa, abre la página con 
 
 ## Música
 
-De fondo suena `assets/cancion.mp3` en bucle, a volumen muy bajo (12 %), con una entrada suave.
+De fondo suena `assets/cancion.mp3` en bucle, a volumen muy bajo (7 %), con una entrada suave.
 Empieza con el primer toque, clic o tecla, porque los navegadores no dejan reproducir sonido antes.
 El botón del altavoz (esquina inferior derecha) la silencia o la vuelve a activar; se recuerda la elección.
 

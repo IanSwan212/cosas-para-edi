@@ -3,7 +3,7 @@
 // solo indica cuántas había visto ya el usuario, para no repetir la animación
 // completa al recargar.
 
-import { flowerCountFor, toISO } from "./calendar.js?v=mvq5mb5z";
+import { flowerCountFor, toISO } from "./calendar.js?v=mvq5qzhd";
 
 const KEY = "ramo.visto";
 

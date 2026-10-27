@@ -1,6 +1,6 @@
 // Música de fondo, muy suave. Los navegadores no dejan sonar sin interacción:
 // empieza con el primer toque, clic o tecla y entra poco a poco.
-const MUSIC_VOLUME = 0.12;
+const MUSIC_VOLUME = 0.07;
 
 export function startMusic(src = "assets/cancion.mp3") {
   const music = new Audio(src);
