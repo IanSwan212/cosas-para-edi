@@ -2,7 +2,7 @@
 // setGrowth(p), p ∈ [0, 1]: 0 = nada, 1 = flor abierta. El estado visual depende
 // solo de p, así que se puede reproducir, invertir o saltar a cualquier punto.
 import * as THREE from "three";
-import { petalGeometry, leafGeometry, stemGeometry } from "./geometry.js?v=mvq4pv5s";
+import { petalGeometry, leafGeometry, stemGeometry } from "./geometry.js?v=mvq5j85t";
 
 const DEG = Math.PI / 180;
 const clamp01 = (x) => Math.min(1, Math.max(0, x));

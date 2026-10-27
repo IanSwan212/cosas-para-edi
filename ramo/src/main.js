@@ -1,22 +1,16 @@
-import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4pv5s";
-import { createProgress } from "./progress.js?v=mvq4pv5s";
-import { FLOWERS } from "./flowerDefs.js?v=mvq4pv5s";
-import { createScene, createBouquet } from "./bouquet.js?v=mvq4pv5s";
-import { renderText, showFinal } from "./ui.js?v=mvq4pv5s";
-import { AsciiView } from "./asciiView.js?v=mvq4pv5s";
+import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq5j85t";
+import { createProgress } from "./progress.js?v=mvq5j85t";
+import { FLOWERS } from "./flowerDefs.js?v=mvq5j85t";
+import { createScene, createBouquet } from "./bouquet.js?v=mvq5j85t";
+import { renderText, showFinal } from "./ui.js?v=mvq5j85t";
+import { AsciiView } from "./asciiView.js?v=mvq5j85t";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4pv5s";
+import { startMusic } from "./music.js?v=mvq5j85t";
+import { setupFlowerLinks } from "./flowerLinks.js?v=mvq5j85t";
 
 const canvas = document.getElementById("scene");
 
-// Sin WebGL no hay ramo 3D: se explica en lugar de quedar en negro.
-const probe = document.createElement("canvas");
-if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) {
-  document.getElementById("progress").dataset.fixed = "1";
-  document.getElementById("progress").textContent =
-    "Tu navegador tiene desactivado WebGL. Activa la «aceleración por hardware» en la configuración de Chrome y recarga.";
-  throw new Error("WebGL no disponible");
-}
+
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // Por defecto, vista ASCII como en el video; ?modo=3d muestra el render 3D directo.
 const mode3d = new URLSearchParams(location.search).get("modo") === "3d";
@@ -105,27 +99,7 @@ if (simDate) {
   showReal({ entry: true });
 }
 
-/* ---------- Música de fondo, muy suave ---------- */
-// Los navegadores no dejan sonar sin interacción: empieza con el primer toque, clic o tecla.
-const music = new Audio("assets/cancion.mp3");
-music.loop = true;
-music.volume = 0;
-const MUSIC_VOLUME = 0.12;
-function startMusic() {
-  window.removeEventListener("pointerdown", startMusic, true);
-  window.removeEventListener("keydown", startMusic, true);
-  music.play().then(() => {
-    const t0 = performance.now();
-    const fade = () => {
-      const k = Math.min(1, (performance.now() - t0) / 4000);
-      music.volume = MUSIC_VOLUME * k;
-      if (k < 1) requestAnimationFrame(fade);
-    };
-    fade();
-  }).catch(() => {});
-}
-window.addEventListener("pointerdown", startMusic, true);
-window.addEventListener("keydown", startMusic, true);
+startMusic();
 
 /* ---------- Bucle ---------- */
 let last = 0;
