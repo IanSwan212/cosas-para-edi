@@ -1,35 +1,35 @@
 // Composición del ramo y escena 3D.
 //
-// Las 29 posiciones se calculan pensando en el ramo completo: una espiral de
-// ángulo áureo sobre una cúpula ovalada. Como la espiral crece del centro hacia
-// fuera, con pocas flores el ramo ya se ve centrado y equilibrado, y cada flor
-// nueva se suma por el borde a otra altura y profundidad.
+// Las 29 cabezas se reparten sobre una cúpula redonda (espiral de Fibonacci
+// sobre un elipsoide), cada una mirando hacia fuera desde el centro del ramo,
+// para que se vea bien desde cualquier lado al girarlo. La espiral empieza en
+// la cima y baja: con pocas flores el ramo ya está centrado, y cada flor nueva
+// se suma alrededor a otra altura.
 import * as THREE from "three";
 import { createFlower } from "./flower.js";
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-export const TIE = new THREE.Vector3(0, 0.25, 0.1); // punto donde convergen los tallos
+export const TIE = new THREE.Vector3(0, 0.25, 0); // punto donde convergen los tallos
 
 export function computeSlots(flowers) {
   const N = flowers.length;
-  const rx = 1.95, ry = 2.05, cy = 3.0, depth = 1.15;
-  // Foco lejano detrás del ramo: las flores miran casi de frente, como en el video.
-  const focus = new THREE.Vector3(0, cy - 0.9, -5.5);
+  const center = new THREE.Vector3(0, 2.55, 0);
+  const rx = 1.85, ry = 1.55, rz = 1.85;
   return flowers.map((cfg, i) => {
-    const r = Math.sqrt((i + 0.55) / (N + 0.55));
-    const a = i * GOLDEN + 1.2;
-    const head = new THREE.Vector3(
-      rx * r * Math.cos(a),
-      cy + ry * r * Math.sin(a) * 0.92 + (1 - r) * 0.25,
-      depth * Math.sqrt(Math.max(0, 1 - r * r * 0.82)) - 0.15 + Math.sin(i * 1.7) * 0.08
-        // Capas alternas delante/detrás para que las flores vecinas no se atraviesen.
-        + (i % 2 ? -0.32 : 0.28) * (1 - r)
-    );
-    const dir = head.clone().sub(focus).normalize();
+    // cos(polar) de 0.93 (cerca de la cima) a −0.3 (algo por debajo del ecuador).
+    const t = (i + 0.5) / N;
+    const polar = Math.acos(0.93 - t * 1.23);
+    const az = i * GOLDEN + 0.6;
+    const n = new THREE.Vector3(Math.sin(polar) * Math.cos(az), Math.cos(polar), Math.sin(polar) * Math.sin(az));
+    // Capas alternas (un poco dentro/fuera) para que las flores vecinas no se atraviesen.
+    const k = 1 + (i % 2 ? -0.07 : 0.05);
+    const head = new THREE.Vector3(center.x + n.x * rx * k, center.y + n.y * ry * k, center.z + n.z * rz * k);
+    // Normal del elipsoide, inclinada hacia arriba como en un ramo real.
+    const dir = new THREE.Vector3(n.x / rx, n.y / ry * 0.8 + 0.12, n.z / rz).normalize();
     // Tallo: base del manojo → atadura común → curva suave → flor.
-    const base = new THREE.Vector3(head.x * 0.05, -1.15, TIE.z + head.z * 0.04);
-    const tie = new THREE.Vector3(head.x * 0.06, TIE.y, TIE.z + head.z * 0.05);
-    const mid = new THREE.Vector3(head.x * 0.42, TIE.y + (head.y - TIE.y) * 0.45, head.z * 0.45 + 0.05);
+    const base = new THREE.Vector3(head.x * 0.05, -1.15, head.z * 0.05);
+    const tie = new THREE.Vector3(head.x * 0.06, TIE.y, head.z * 0.06);
+    const mid = new THREE.Vector3(head.x * 0.45, TIE.y + (head.y - TIE.y) * 0.5, head.z * 0.45);
     const curve = new THREE.CatmullRomCurve3([base, tie, mid, head], false, "centripetal");
     return { head, dir, curve };
   });
@@ -70,14 +70,21 @@ export function createScene(canvas) {
     const vfov = (camera.fov * Math.PI) / 180;
     const distH = h / 2 / Math.tan(vfov / 2);
     const distW = w / 2 / (Math.tan(vfov / 2) * camera.aspect);
-    const dist = Math.max(distH, distW);
+    const dist = Math.max(distH, distW) + 0.6;
     const mobile = camera.aspect < 0.8;
-    camera.position.set(0, 2.5, dist + 0.6);
-    camera.lookAt(0, mobile ? 2.25 : 2.35, 0);
+    view.target.set(0, mobile ? 2.25 : 2.35, 0);
+    view.distance = dist;
+    // Solo la primera vez se coloca la cámara; después la mueve el usuario.
+    if (!view.placed) {
+      camera.position.set(0, 5.2, dist); // un poco desde arriba, como se mira un ramo
+      camera.lookAt(view.target);
+      view.placed = true;
+    }
     camera.updateProjectionMatrix();
   }
 
-  return { renderer, scene, camera, bouquet, resize };
+  const view = { target: new THREE.Vector3(), distance: 14, placed: false };
+  return { renderer, scene, camera, bouquet, resize, view };
 }
 
 /** Gestiona qué flores están en escena y su crecimiento animado. */

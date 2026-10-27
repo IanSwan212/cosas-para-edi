@@ -14,6 +14,13 @@ un glifo elegido por luminosidad y coloreado con el color de esa zona (`src/asci
 flores mezcladas: lirios, rosas, tulipanes, dalias, margaritas, anémonas, cosmos y ramilletes.
 Con `?modo=3d` se ve el render 3D sin el efecto ASCII.
 
+## Girar el ramo
+
+Arrastra con el ratón o el dedo para girarlo y verlo desde cualquier lado; usa la rueda o pellizca
+para acercar. Con doble clic o doble toque vuelves a la vista frontal. Las flores se reparten en una
+cúpula redonda y cada una mira hacia fuera, así que se ven bien desde todos los ángulos
+(`OrbitControls` de Three.js).
+
 ## Modo de prueba
 
 - Pulsa el icono de calendario (esquina inferior derecha) o la tecla **P**.
