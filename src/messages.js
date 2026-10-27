@@ -3,6 +3,8 @@
 // para el resto se muestra el original en español (ver getMessage).
 // Traducciones no revisadas por hablantes nativos.
 
+import { AUTO_MESSAGES } from "./messagesAuto.js";
+
 const CHORUS_REPEATS = 10;
 
 const MESSAGES = {
@@ -939,14 +941,15 @@ const MESSAGES = {
 
 /** Devuelve el mensaje para un idioma; si no hay traducción, el original en español. */
 export function getMessage(langId) {
-  const translated = MESSAGES[langId];
+  const translated = MESSAGES[langId] || AUTO_MESSAGES[langId];
   const msg = translated || MESSAGES.es;
   return {
     lang: translated ? langId : "es",
     translated: !!translated,
+    auto: !MESSAGES[langId] && !!AUTO_MESSAGES[langId],
     dir: msg.dir || "ltr",
     lines: msg.lines.concat(Array(CHORUS_REPEATS).fill(msg.chorus))
   };
 }
 
-export const MESSAGE_LANGUAGES = Object.keys(MESSAGES);
+export const MESSAGE_LANGUAGES = Object.keys(MESSAGES).concat(Object.keys(AUTO_MESSAGES));
