@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Nuestro ramo</title>
+  <meta name="description" content="Un ramo que gana una flor cada día, del 26 de octubre al 23 de noviembre de 2026." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene" role="img" aria-label="Ramo de flores en 3D que crece una flor por día"></canvas>
+
+  <header class="caption">
+    <p id="headline" class="headline">Un día más, una flor más.</p>
+    <p id="progress" class="progress" aria-live="polite"></p>
+    <p id="sim-badge" class="sim-badge" hidden>Simulación · no es la fecha real</p>
+  </header>
+
+  <p id="final" class="final">Nuestro ramo ha florecido por completo.</p>
+
+  <button id="test-toggle" class="test-toggle" type="button" aria-controls="test-panel" aria-expanded="false"
+    aria-label="Modo de prueba: simular otra fecha" title="Modo de prueba (P)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  </button>
+
+  <section id="test-panel" class="test-panel" hidden aria-label="Modo de prueba">
+    <p class="test-title">Modo de prueba</p>
+    <label class="test-row">
+      <span id="test-label"></span>
+      <input id="test-range" type="range" step="1" />
+    </label>
+    <div class="test-actions">
+      <button id="test-replay" type="button">Repetir crecimiento</button>
+      <button id="test-exit" type="button">Volver a la fecha real</button>
+    </div>
+  </section>
+
+  <noscript><p class="caption">Este ramo necesita JavaScript.</p></noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
