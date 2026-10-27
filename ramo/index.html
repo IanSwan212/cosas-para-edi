@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" />
-  <link rel="stylesheet" href="styles.css?v=mvq4hw3t" />
+  <link rel="stylesheet" href="styles.css?v=mvq4ne1g" />
   <script type="importmap">
     { "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      "three": "./vendor/three/three.module.js",
+      "three/addons/": "./vendor/three/addons/"
     } }
   </script>
 </head>
@@ -31,7 +31,24 @@
   <p id="final" class="final">Nuestro ramo ha florecido por completo.</p>
 
 
+  <script>
+    // Si el ramo no arranca (error, sin WebGL, archivo que no carga), se dice en pantalla
+    // en lugar de dejar la página en negro.
+    (function () {
+      function show(msg) {
+        var p = document.getElementById("progress");
+        if (p && !window.__ramo && !p.dataset.fixed) p.textContent = msg;
+      }
+      window.addEventListener("error", function (e) {
+        show("No se pudo cargar el ramo: " + (e.message || "error de carga") + ". Prueba a recargar la página.");
+      }, true);
+      window.addEventListener("unhandledrejection", function (e) {
+        show("No se pudo cargar el ramo: " + (e.reason && e.reason.message || e.reason) + ".");
+      });
+      setTimeout(function () { show("El ramo está tardando en cargar… prueba a recargar la página (Ctrl + Mayús + R)."); }, 9000);
+    })();
+  </script>
   <noscript><p class="caption">Este ramo necesita JavaScript.</p></noscript>
-  <script type="module" src="src/main.js?v=mvq4hw3t"></script>
+  <script type="module" src="src/main.js?v=mvq4ne1g"></script>
 </body>
 </html>

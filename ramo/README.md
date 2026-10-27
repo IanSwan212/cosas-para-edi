@@ -81,7 +81,7 @@ Empieza con el primer toque, clic o tecla, porque los navegadores no dejan repro
 
 Las especies son lirio, rosa, tulipán, dalia, margarita, anémona, cosmos y ramillete de florecillas.
 
-**Dependencia añadida:** Three.js 0.160.0 desde unpkg, mediante un *import map*. Hace falta WebGL para
+**Dependencia añadida:** Three.js 0.160.0 (licencia MIT), incluido en `vendor/three/` para no depender de un CDN externo. Hace falta WebGL para
 dar volumen real a pétalos y hojas. No requiere instalar nada ni un paso de compilación.
 
 ## Pruebas

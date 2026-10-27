@@ -3,7 +3,7 @@
 // para el resto se muestra el original en español (ver getMessage).
 // Traducciones no revisadas por hablantes nativos.
 
-import { AUTO_MESSAGES } from "./messagesAuto.js?v=mvq4hw3t";
+import { AUTO_MESSAGES } from "./messagesAuto.js?v=mvq4ne1g";
 
 const CHORUS_REPEATS = 10;
 

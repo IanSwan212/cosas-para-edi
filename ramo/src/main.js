@@ -1,13 +1,22 @@
-import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4hw3t";
-import { createProgress } from "./progress.js?v=mvq4hw3t";
-import { FLOWERS } from "./flowerDefs.js?v=mvq4hw3t";
-import { createScene, createBouquet } from "./bouquet.js?v=mvq4hw3t";
-import { renderText, showFinal } from "./ui.js?v=mvq4hw3t";
-import { AsciiView } from "./asciiView.js?v=mvq4hw3t";
+import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4ne1g";
+import { createProgress } from "./progress.js?v=mvq4ne1g";
+import { FLOWERS } from "./flowerDefs.js?v=mvq4ne1g";
+import { createScene, createBouquet } from "./bouquet.js?v=mvq4ne1g";
+import { renderText, showFinal } from "./ui.js?v=mvq4ne1g";
+import { AsciiView } from "./asciiView.js?v=mvq4ne1g";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4hw3t";
+import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4ne1g";
 
 const canvas = document.getElementById("scene");
+
+// Sin WebGL no hay ramo 3D: se explica en lugar de quedar en negro.
+const probe = document.createElement("canvas");
+if (!(probe.getContext("webgl2") || probe.getContext("webgl"))) {
+  document.getElementById("progress").dataset.fixed = "1";
+  document.getElementById("progress").textContent =
+    "Tu navegador tiene desactivado WebGL. Activa la «aceleración por hardware» en la configuración de Chrome y recarga.";
+  throw new Error("WebGL no disponible");
+}
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // Por defecto, vista ASCII como en el video; ?modo=3d muestra el render 3D directo.
 const mode3d = new URLSearchParams(location.search).get("modo") === "3d";
