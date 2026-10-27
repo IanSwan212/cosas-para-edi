@@ -21,6 +21,16 @@ para acercar. Con doble clic o doble toque vuelves a la vista frontal. Las flore
 cúpula redonda y cada una mira hacia fuera, así que se ven bien desde todos los ángulos
 (`OrbitControls` de Three.js).
 
+## Enlaces en las flores
+
+Cada flor puede abrir un sitio. Se configuran en `src/links.js` (número de flor → `{ url, title }`).
+Al pasar el cursor aparece el título y la fecha de la flor; con un clic o un toque se abre el enlace.
+Arrastrar para girar no cuenta como clic. Ahora mismo, la flor 1 (26 de octubre) abre el corazón
+«Te amo en todos los idiomas».
+
+Para que se puedan tocar bien, las cabezas se separan con una relajación determinista que aleja
+cada par de flores hasta que no se tocan, así que siempre quedan en la misma posición.
+
 ## Modo de prueba
 
 - Pulsa el icono de calendario (esquina inferior derecha) o la tecla **P**.

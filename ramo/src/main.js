@@ -5,6 +5,7 @@ import { createScene, createBouquet } from "./bouquet.js";
 import { renderText, showFinal, setupTestPanel } from "./ui.js";
 import { AsciiView } from "./asciiView.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { setupFlowerLinks } from "./flowerLinks.js";
 
 const canvas = document.getElementById("scene");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,6 +44,7 @@ function fitAll() {
 }
 fitAll();
 window.addEventListener("resize", fitAll);
+setupFlowerLinks({ canvas, camera, group, label: document.getElementById("flower-label") });
 // Doble clic / doble toque: volver a la vista frontal.
 canvas.addEventListener("dblclick", () => {
   camera.position.set(0, 5.2, view.distance);
