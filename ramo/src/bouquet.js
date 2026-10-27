@@ -13,7 +13,8 @@ export const TIE = new THREE.Vector3(0, 0.25, 0.1); // punto donde convergen los
 export function computeSlots(flowers) {
   const N = flowers.length;
   const rx = 1.95, ry = 2.05, cy = 3.0, depth = 1.15;
-  const focus = new THREE.Vector3(0, cy - 1.6, -2.2);
+  // Foco lejano detrás del ramo: las flores miran casi de frente, como en el video.
+  const focus = new THREE.Vector3(0, cy - 0.9, -5.5);
   return flowers.map((cfg, i) => {
     const r = Math.sqrt((i + 0.55) / (N + 0.55));
     const a = i * GOLDEN + 1.2;
@@ -28,7 +29,7 @@ export function computeSlots(flowers) {
     // Tallo: base del manojo → atadura común → curva suave → flor.
     const base = new THREE.Vector3(head.x * 0.05, -1.15, TIE.z + head.z * 0.04);
     const tie = new THREE.Vector3(head.x * 0.06, TIE.y, TIE.z + head.z * 0.05);
-    const mid = new THREE.Vector3(head.x * 0.5, TIE.y + (head.y - TIE.y) * 0.5, head.z * 0.5 + 0.05);
+    const mid = new THREE.Vector3(head.x * 0.42, TIE.y + (head.y - TIE.y) * 0.45, head.z * 0.45 + 0.05);
     const curve = new THREE.CatmullRomCurve3([base, tie, mid, head], false, "centripetal");
     return { head, dir, curve };
   });
@@ -58,9 +59,11 @@ export function createScene(canvas) {
   const bouquet = new THREE.Group();
   scene.add(bouquet);
 
-  function resize(width, height) {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(width, height, false);
+  function resize(width, height, { sizeRenderer = true } = {}) {
+    if (sizeRenderer) {
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(width, height, false);
+    }
     camera.aspect = width / height;
     // Encuadre: el ramo completo (alto ≈ 7.6, ancho ≈ 5.2) cabe en cualquier proporción.
     const h = 7.7, w = 5.3;
@@ -122,7 +125,7 @@ export function createBouquet(group, flowerDefs) {
     replay(count, now, stagger) {
       for (const [, f] of built) f.setGrowth(0);
       anim.clear();
-      return this.show(count, { now, stagger });
+      return this.show(count, { now, stagger, duration: 4.2 });
     },
     /** Avanza las animaciones; devuelve true si alguna sigue activa. */
     update(now, swayTime, swayAmount) {

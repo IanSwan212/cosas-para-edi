@@ -28,17 +28,24 @@ export const PALETTE = {
   sky: ["#2f5fb3", "#8fb8ff"],
   magenta: ["#8c0f5e", "#e04aa6"],
   cream: ["#e9d6a4", "#fff6dc"],
-  wine: ["#4d0617", "#a3152f"]
+  wine: ["#4d0617", "#a3152f"],
+  apricot: ["#d9792b", "#ffc08a"],
+  salmon: ["#d25a5a", "#ffb0a0"],
+  ivory: ["#d8cfb8", "#fffaf0"],
+  sunset: ["#c43d0c", "#ff8a3d"],
+  plum: ["#5c1240", "#c05a92"]
 };
 
-// Orden pensado para la composición: las primeras flores (centro) son grandes.
+// Como en el video, el ramo es sobre todo de lirios (18, cada uno de un color),
+// acompañados de tulipanes, rosas y flores pequeñas. Orden pensado para la
+// composición: las primeras flores (centro) son las más grandes.
 const PLAN = [
-  ["lily", "crimson"], ["rose", "blush"], ["lily", "white"], ["tulip", "coral"], ["dahlia", "magenta"],
-  ["lily", "butter"], ["rose", "crimson"], ["anemone", "white"], ["daisy", "white"], ["lily", "rose"],
-  ["cosmos", "lavender"], ["tulip", "butter"], ["cluster", "sky"], ["rose", "peach"], ["dahlia", "gold"],
-  ["anemone", "violet"], ["lily", "peach"], ["daisy", "blush"], ["cosmos", "magenta"], ["tulip", "wine"],
-  ["cluster", "lavender"], ["rose", "cream"], ["lily", "coral"], ["daisy", "butter"], ["anemone", "sky"],
-  ["dahlia", "blush"], ["cluster", "white"], ["tulip", "violet"], ["rose", "rose"]
+  ["lily", "crimson"], ["lily", "white"], ["lily", "magenta"], ["lily", "butter"], ["lily", "peach"],
+  ["tulip", "coral"], ["lily", "rose"], ["lily", "cream"], ["rose", "blush"], ["lily", "wine"],
+  ["lily", "gold"], ["tulip", "butter"], ["lily", "lavender"], ["lily", "coral"], ["cluster", "white"],
+  ["lily", "blush"], ["rose", "crimson"], ["lily", "violet"], ["lily", "apricot"], ["tulip", "wine"],
+  ["daisy", "white"], ["lily", "salmon"], ["lily", "ivory"], ["rose", "peach"], ["anemone", "white"],
+  ["lily", "sunset"], ["cluster", "sky"], ["lily", "plum"], ["tulip", "violet"]
 ];
 
 const CENTER = {

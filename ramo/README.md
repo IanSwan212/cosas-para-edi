@@ -6,6 +6,14 @@ Un ramo en 3D que gana una flor cada día, del **26 de octubre** al **23 de novi
 - Web: `https://ianswan212.github.io/cosas-para-edi/ramo/`
 - En local: `python -m http.server 8765` en la raíz del repositorio y abrir `http://localhost:8765/ramo/`
 
+## Estilo (como el video)
+
+Como el video de referencia («ASCII Lily Bouquet»), el ramo se dibuja como **arte ASCII de colores**:
+la escena 3D se renderiza a una textura con un píxel por carácter, y un shader dibuja en cada celda
+un glifo elegido por luminosidad y coloreado con el color de esa zona (`src/asciiView.js`). Predominan
+los **lirios** (18 de las 29 flores, cada uno de un color), con tulipanes, rosas y flores pequeñas.
+Con `?modo=3d` se ve el render 3D sin el efecto ASCII.
+
 ## Modo de prueba
 
 - Pulsa el icono de calendario (esquina inferior derecha) o la tecla **P**.
@@ -46,6 +54,7 @@ Un ramo en 3D que gana una flor cada día, del **26 de octubre** al **23 de novi
 | `src/geometry.js` | Pétalos, hojas y tallos como superficies 3D procedurales |
 | `src/flower.js` | Montaje de cada especie y su animación (tallo → hojas → capullo → apertura) |
 | `src/bouquet.js` | Composición (espiral áurea sobre una cúpula), escena, luces y cámara |
+| `src/asciiView.js` | Efecto ASCII en la GPU (atlas de glifos + shader) |
 | `src/ui.js` | Textos y panel de prueba |
 | `src/main.js` | Orquestación y bucle de render |
 | `tests/calendar.test.mjs` | Pruebas unitarias |

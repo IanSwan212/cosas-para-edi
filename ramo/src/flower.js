@@ -52,10 +52,11 @@ function buildHead(cfg) {
 
   switch (cfg.species) {
     case "lily": {
-      const geoOuter = petalGeometry({ length: 1.0 * s, width: 0.34 * s, cup: 0.55, curl: 0.32, profile: "pointed", base, tip });
-      const geoInner = petalGeometry({ length: 0.95 * s, width: 0.4 * s, cup: 0.6, curl: 0.28, profile: "pointed", base, tip, ruffle: 0.6 });
-      petals.push(...ring(head, geoOuter, { count: 3, closed: 5 * DEG, open: 72 * DEG, phase: cfg.spin }));
-      petals.push(...ring(head, geoInner, { count: 3, closed: 3 * DEG, open: 64 * DEG, phase: cfg.spin + Math.PI / 3, delay: 0.06 }));
+      // Estrella de seis pétalos vista de frente, como los lirios del video.
+      const geoOuter = petalGeometry({ length: 1.08 * s, width: 0.36 * s, cup: 0.5, curl: 0.22, profile: "pointed", base, tip, spots: true });
+      const geoInner = petalGeometry({ length: 1.0 * s, width: 0.42 * s, cup: 0.55, curl: 0.2, profile: "pointed", base, tip, ruffle: 0.6, spots: true });
+      petals.push(...ring(head, geoOuter, { count: 3, closed: 5 * DEG, open: 80 * DEG, phase: cfg.spin }));
+      petals.push(...ring(head, geoInner, { count: 3, closed: 3 * DEG, open: 74 * DEG, phase: cfg.spin + Math.PI / 3, delay: 0.06 }));
       // Estambres con anteras.
       for (let k = 0; k < 6; k++) {
         const g = new THREE.Group();
@@ -182,10 +183,11 @@ export function createFlower(cfg, slot) {
   const leaves = [];
   for (let k = 0; k < cfg.leafCount; k++) {
     // Concentradas cerca de la atadura, como el follaje del video.
-    const u = 0.24 + (k / Math.max(1, cfg.leafCount)) * 0.3 + ((cfg.phase * 13 + k * 0.17) % 0.07);
+    const u = 0.08 + (k / Math.max(1, cfg.leafCount)) * 0.3 + ((cfg.phase * 13 + k * 0.17) % 0.07);
     const geo = leafGeometry({
-      length: (0.7 + 0.3 * ((k + cfg.day) % 3) / 2) * (cfg.leafShape === "oval" ? 0.8 : 1),
-      width: cfg.leafShape === "oval" ? 0.28 : 0.17, shape: cfg.leafShape
+      // Hojas largas y estrechas, como el follaje de la base del video.
+      length: 0.95 + 0.4 * (((k + cfg.day) % 3) / 2),
+      width: 0.13, shape: "lanceolate"
     });
     const holder = new THREE.Group();
     holder.position.copy(slot.curve.getPointAt(u));
@@ -194,7 +196,7 @@ export function createFlower(cfg, slot) {
     const twist = new THREE.Group();
     twist.rotation.y = cfg.leafTwist + k * 2.3;
     const leaf = new THREE.Mesh(geo, MAT.leaf);
-    leaf.rotation.x = (50 + 15 * (k % 2)) * DEG;
+    leaf.rotation.x = (24 + 14 * (k % 2)) * DEG;
     twist.add(leaf);
     holder.add(twist);
     sway.add(holder);

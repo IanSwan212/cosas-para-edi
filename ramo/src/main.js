@@ -3,10 +3,15 @@ import { createProgress } from "./progress.js";
 import { FLOWERS } from "./flowerDefs.js";
 import { createScene, createBouquet } from "./bouquet.js";
 import { renderText, showFinal, setupTestPanel } from "./ui.js";
+import { AsciiView } from "./asciiView.js";
 
 const canvas = document.getElementById("scene");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Por defecto, vista ASCII como en el video; ?modo=3d muestra el render 3D directo.
+const mode3d = new URLSearchParams(location.search).get("modo") === "3d";
 const { renderer, scene, camera, bouquet: group, resize } = createScene(canvas);
+const ascii = mode3d ? null : new AsciiView({ renderer, scene, camera });
+const draw = () => (ascii ? ascii.render() : renderer.render(scene, camera));
 const bouquet = createBouquet(group, FLOWERS);
 const clock = () => performance.now() / 1000;
 
@@ -15,6 +20,8 @@ let finalAt = Infinity;
 
 function fit() {
   resize(window.innerWidth, window.innerHeight);
+  ascii?.resize(window.innerWidth, window.innerHeight);
+  draw();
 }
 fit();
 window.addEventListener("resize", fit);
@@ -36,7 +43,7 @@ function showReal({ entry }) {
     bouquet.show(visit.count, { now, instantBelow: visit.count });
   } else if (entry && visit.firstVisit) {
     // Primera apertura: el ramo crece flor a flor, acelerado si son muchas.
-    bouquet.show(visit.count, { now, stagger: Math.min(0.5, 7 / Math.max(1, visit.count)), duration: 3 });
+    bouquet.show(visit.count, { now, stagger: Math.min(0.45, 1.6 / Math.max(1, visit.count)), duration: 4.2 });
   } else if (entry) {
     // Vuelve otro día: las anteriores ya están; solo crecen las pendientes.
     bouquet.show(visit.count, { now, instantBelow: visit.newFrom, stagger: 0.45, duration: 2.8 });
@@ -67,7 +74,7 @@ const panel = setupTestPanel({
   onReplay() {
     const date = simDate || today;
     const count = flowerCountFor(date);
-    bouquet.replay(count, clock() + 0.2, Math.min(0.5, 7 / Math.max(1, count)));
+    bouquet.replay(count, clock() + 0.2, Math.min(0.45, 1.6 / Math.max(1, count)));
     scheduleFinal(date, count);
   }
 });
@@ -83,9 +90,9 @@ function frame(ms) {
     finalPending = false;
     showFinal(true);
   }
-  // En reposo solo hay una oscilación mínima: basta con ~30 fps.
+  // En reposo solo hay una oscilación mínima: bastan ~30 fps.
   if (active || ms - last > 33) {
-    renderer.render(scene, camera);
+    draw();
     last = ms;
   }
   requestAnimationFrame(frame);
@@ -95,4 +102,4 @@ requestAnimationFrame(frame);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) last = 0; });
 
 // Diagnóstico para pruebas manuales desde la consola.
-window.__ramo = { bouquet, today, visit, renderer, scene, camera };
+window.__ramo = { bouquet, today, visit, renderer, scene, camera, draw };
