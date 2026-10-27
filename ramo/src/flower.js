@@ -183,11 +183,11 @@ export function createFlower(cfg, slot) {
   const leaves = [];
   for (let k = 0; k < cfg.leafCount; k++) {
     // Concentradas cerca de la atadura, como el follaje del video.
-    const u = 0.08 + (k / Math.max(1, cfg.leafCount)) * 0.3 + ((cfg.phase * 13 + k * 0.17) % 0.07);
+    const u = 0.05 + (k / Math.max(1, cfg.leafCount)) * 0.24 + ((cfg.phase * 13 + k * 0.17) % 0.06);
     const geo = leafGeometry({
       // Hojas largas y estrechas, como el follaje de la base del video.
-      length: 0.95 + 0.4 * (((k + cfg.day) % 3) / 2),
-      width: 0.13, shape: "lanceolate"
+      length: 1.2 + 0.5 * (((k + cfg.day) % 3) / 2),
+      width: 0.11, shape: "lanceolate"
     });
     const holder = new THREE.Group();
     holder.position.copy(slot.curve.getPointAt(u));
@@ -196,7 +196,7 @@ export function createFlower(cfg, slot) {
     const twist = new THREE.Group();
     twist.rotation.y = cfg.leafTwist + k * 2.3;
     const leaf = new THREE.Mesh(geo, MAT.leaf);
-    leaf.rotation.x = (24 + 14 * (k % 2)) * DEG;
+    leaf.rotation.x = (30 + 18 * (k % 2)) * DEG; // abanico de hojas en la base, como en el video
     twist.add(leaf);
     holder.add(twist);
     sway.add(holder);
@@ -243,11 +243,14 @@ export function createFlower(cfg, slot) {
       lf.mesh.rotation.z = (1 - a) * 0.6;
     }
 
-    const openStart = 0.55;
+    // Fases como en el video: tallos (0–45 %), capullos alargados (30–60 %) y apertura.
+    const openStart = 0.6 + (cfg.bloomDelay || 0);
+    const openSpan = 1 - openStart - 0.02;
     for (const pt of petals) {
-      const o = easeOut((p - openStart - pt.delay * 0.3) / (1 - openStart - 0.08));
+      const o = easeOut((p - openStart - pt.delay * 0.2) / openSpan);
       pt.mesh.rotation.x = pt.closed + (pt.open - pt.closed) * o;
-      pt.mesh.scale.setScalar(0.6 + 0.4 * o);
+      // Capullo estrecho y alargado que se ensancha al abrirse.
+      pt.mesh.scale.set(0.5 + 0.5 * o, 0.78 + 0.22 * o, 0.5 + 0.5 * o);
     }
     const ex = smooth((p - 0.75) / 0.25);
     for (const e of extras) {

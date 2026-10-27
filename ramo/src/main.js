@@ -84,6 +84,8 @@ if (!simDate) showReal({ entry: true });
 /* ---------- Bucle ---------- */
 let last = 0;
 function frame(ms) {
+  // window.__ramoFrozen = true detiene el bucle (para inspeccionar fotogramas en pruebas).
+  if (window.__ramoFrozen) return requestAnimationFrame(frame);
   const t = ms / 1000;
   const active = bouquet.update(clock(), t, reducedMotion ? 0 : 1);
   if (finalPending && clock() >= finalAt) {
