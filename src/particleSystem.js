@@ -1,6 +1,6 @@
 // Partículas tipográficas. Cada palabra es una LoveParticle renderizada en Canvas.
 
-import { fontString } from "./fontManager.js";
+import { fontString } from "./fontManager.js?v=mvq4hw3t";
 
 const easeOutCubic = (x) => 1 - Math.pow(1 - x, 3);
 

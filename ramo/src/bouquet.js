@@ -6,7 +6,7 @@
 // la cima y baja: con pocas flores el ramo ya está centrado, y cada flor nueva
 // se suma alrededor a otra altura.
 import * as THREE from "three";
-import { createFlower } from "./flower.js";
+import { createFlower } from "./flower.js?v=mvq4hw3t";
 
 const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 export const TIE = new THREE.Vector3(0, 0.25, 0); // punto donde convergen los tallos

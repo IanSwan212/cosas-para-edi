@@ -1,11 +1,11 @@
-import { localToday, isComplete, parseISO } from "./calendar.js";
-import { createProgress } from "./progress.js";
-import { FLOWERS } from "./flowerDefs.js";
-import { createScene, createBouquet } from "./bouquet.js";
-import { renderText, showFinal } from "./ui.js";
-import { AsciiView } from "./asciiView.js";
+import { localToday, isComplete, parseISO } from "./calendar.js?v=mvq4hw3t";
+import { createProgress } from "./progress.js?v=mvq4hw3t";
+import { FLOWERS } from "./flowerDefs.js?v=mvq4hw3t";
+import { createScene, createBouquet } from "./bouquet.js?v=mvq4hw3t";
+import { renderText, showFinal } from "./ui.js?v=mvq4hw3t";
+import { AsciiView } from "./asciiView.js?v=mvq4hw3t";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { setupFlowerLinks } from "./flowerLinks.js";
+import { setupFlowerLinks } from "./flowerLinks.js?v=mvq4hw3t";
 
 const canvas = document.getElementById("scene");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
