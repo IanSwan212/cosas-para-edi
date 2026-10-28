@@ -24,10 +24,10 @@ retrato aparece dentro de un círculo sobre fondo negro.
 
 `assets/foto.jpg` se generó a partir de la original, en local y sin servicios externos:
 
-1. Girada 90° a la izquierda para que quede derecha.
-2. Recortada en un cuadrado con los dos rostros completos (tú a la izquierda, Edi a la derecha con gafas).
-3. Solo ajustes de tono: autocontraste, +35 % de contraste y algo de nitidez. La pared clara del fondo se
-   oscureció suavemente alrededor de los rostros para imitar el fondo oscuro del video.
+1. Foto del beso, ya en vertical correcto (no hizo falta girarla).
+2. Recortada en un cuadrado centrado en los dos rostros, con el beso en el centro de la espiral.
+3. Solo ajustes de tono: autocontraste, +25 % de contraste y algo de nitidez. El fondo ya es oscuro,
+   como en el video, así que no se atenuó nada.
 
 Para usar otra foto, sustituye `assets/foto.jpg` por una imagen cuadrada con los rostros cerca del centro
 y sube el número `?v=` de `PHOTO` en `index.html`.
