@@ -3,8 +3,8 @@
 // la flor lo abre; en táctil, el botón «Abrir» de la tarjeta. Un arrastre
 // (girar el ramo) no cuenta como clic.
 import * as THREE from "three";
-import { LINKS } from "./links.js?v=mvq7uqvw";
-import { dateForFlower, formatDate } from "./calendar.js?v=mvq7uqvw";
+import { LINKS } from "./links.js?v=mvrlbbgq";
+import { dateForFlower, formatDate } from "./calendar.js?v=mvrlbbgq";
 
 export function setupFlowerLinks({ canvas, camera, group, label: card }) {
   const raycaster = new THREE.Raycaster();

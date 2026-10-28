@@ -3,5 +3,6 @@
 // (preview es opcional: la imagen que se ve al pasar el cursor o tocar la flor).
 // Las flores sin enlace no reaccionan al clic.
 export const LINKS = {
-  1: { url: "../", title: "Te amo en todos los idiomas", preview: "assets/previews/corazon.jpg" }
+  1: { url: "../", title: "Te amo en todos los idiomas", preview: "assets/previews/corazon.jpg" },
+  2: { url: "../espiral/", title: "Spiral Art", preview: "assets/previews/espiral.jpg" }
 };
