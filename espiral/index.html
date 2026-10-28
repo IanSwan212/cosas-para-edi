@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Spiral Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="art" role="img" aria-label="Retrato de Edi y yo dibujado con la frase I love you a lo largo de una espiral"></canvas>
+  <script type="module">
+    // Recreación del video «Spiral Art»: la frase se escribe sin parar sobre una
+    // espiral de Arquímedes que crece desde el centro; el brillo de cada letra
+    // sale de la foto, así el retrato aparece dentro de un círculo.
+    const PHRASE = "I love you ";
+    const PHOTO = "assets/foto.jpg?v=4";
+    const PREPARING = 0.45;  // s con «preparing...» antes de empezar (como el video)
+    const DRAW_TIME = 8.0;   // s que tarda la espiral en completarse (medido en el video)
+    const RED = [255, 52, 34];
+
+    const canvas = document.getElementById("art");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+      img.src = PHOTO;
+    });
+
+    // Luminosidad de la foto (0..1), con autocontraste para que los rostros destaquen.
+    const S = 320;
+    const sample = document.createElement("canvas");
+    sample.width = sample.height = S;
+    const sctx = sample.getContext("2d", { willReadFrequently: true });
+    sctx.drawImage(img, 0, 0, S, S);
+    const px = sctx.getImageData(0, 0, S, S).data;
+    const lum = new Float32Array(S * S);
+    let lo = 1, hi = 0;
+    for (let i = 0; i < S * S; i++) {
+      const v = (0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2]) / 255;
+      lum[i] = v;
+      if (v > 0.02) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+    }
+    const brightness = (u, v) => {
+      const x = Math.min(S - 1, Math.max(0, Math.round(u * (S - 1))));
+      const y = Math.min(S - 1, Math.max(0, Math.round(v * (S - 1))));
+      const n = (lum[y * S + x] - lo) / Math.max(0.05, hi - lo);
+      return Math.pow(Math.min(1, Math.max(0, n)), 1.9);
+    };
+
+    let W, H, R, glyphs, start, drawn;
+
+    function layout() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      R = Math.min(W, H) * 0.46;
+      const font = Math.max(5, R / 64);
+      const spacing = font * 1.12;            // distancia entre vueltas
+      ctx.font = `700 ${font}px Arial, Helvetica, sans-serif`;
+      const widths = {};
+      for (const ch of new Set(PHRASE)) widths[ch] = ctx.measureText(ch).width;
+
+      // Letras a lo largo de r = (spacing / 2π)·θ, cada una girada tangente a la curva.
+      glyphs = [];
+      const b = spacing / (2 * Math.PI);
+      let theta = 2.5, k = 0;
+      while (true) {
+        const r = b * theta;
+        if (r > R) break;
+        const ch = PHRASE[k % PHRASE.length];
+        const w = widths[ch] + font * 0.04;
+        const x = Math.cos(theta) * r, y = Math.sin(theta) * r;
+        const bright = brightness(0.5 + x / (2 * R), 0.5 + y / (2 * R));
+        glyphs.push({ ch, x, y, a: theta + Math.PI / 2, bright, r });
+        theta += w / Math.max(r, 1);         // avance según el ancho de la letra
+        k++;
+      }
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, W, H);
+      drawn = 0;
+    }
+
+    function drawUpTo(n) {
+      ctx.save();
+      ctx.translate(W / 2, H / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for (; drawn < n; drawn++) {
+        const g = glyphs[drawn];
+        if (g.bright < 0.07) continue;       // zonas oscuras: sin letra
+        // Rojo brillante en las luces, apagado en las sombras (como el video).
+        const k = 0.22 + 0.78 * Math.sqrt(g.bright);
+        const [r0, g0, b0] = RED;
+        ctx.fillStyle = `rgb(${r0 * k | 0},${g0 * k * (0.7 + 0.5 * g.bright) | 0},${b0 * k | 0})`;
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.rotate(g.a);
+        ctx.fillText(g.ch, 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function preparing(show) {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, W, H);
+      if (!show) return;
+      ctx.fillStyle = "rgba(160,160,160,0.75)";
+      ctx.font = `${Math.max(12, R / 22)}px Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("preparing...", W / 2, H / 2);
+    }
+
+    function frame(now) {
+      const t = (now - start) / 1000;
+      if (t < PREPARING) {
+        preparing(true);
+      } else {
+        if (drawn === 0) preparing(false);
+        // Ritmo constante de letras (como el video): el radio crece con √t.
+        const p = Math.min(1, (t - PREPARING) / DRAW_TIME);
+        ctx.font = `700 ${Math.max(5, R / 64)}px Arial, Helvetica, sans-serif`;
+        drawUpTo(Math.floor(p * glyphs.length));
+        if (p >= 1) return;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function run() {
+      layout();
+      start = performance.now();
+      requestAnimationFrame(frame);
+    }
+
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const t = (performance.now() - start) / 1000;
+        layout();
+        // Mantiene el punto de la animación al cambiar de tamaño.
+        start = performance.now() - t * 1000;
+        requestAnimationFrame(frame);
+      }, 200);
+    });
+    // Tecla R o doble toque: repetir.
+    window.addEventListener("keydown", (e) => e.key.toLowerCase() === "r" && run());
+    canvas.addEventListener("dblclick", run);
+    window.__spiral = { get glyphs() { return glyphs; }, drawUpTo, layout, preparing };
+    run();
+  </script>
+</body>
+</html>
