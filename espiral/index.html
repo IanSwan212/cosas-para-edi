@@ -8,10 +8,63 @@
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
     canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    .mute {
+      position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom));
+      width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%;
+      background: transparent; color: #f6e7ea; opacity: 0.4; cursor: pointer; transition: opacity 0.2s;
+    }
+    .mute:hover, .mute:focus-visible { opacity: 0.9; }
+    .mute svg { width: 22px; height: 22px; }
+    .mute .cross { display: none; }
+    .mute[aria-pressed="true"] .waves { display: none; }
+    .mute[aria-pressed="true"] .cross { display: inline; }
   </style>
 </head>
 <body>
   <canvas id="art" role="img" aria-label="Retrato de Edi y yo dibujado con la frase I love you a lo largo de una espiral"></canvas>
+  <button id="mute" class="mute" type="button" aria-pressed="false" aria-label="Silenciar música" title="Silenciar música">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z" fill="currentColor"/><path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path class="cross" d="M16 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+  </button>
+  <script>
+    // Música de fondo muy tenue (5 %). Empieza con el primer toque, clic o tecla,
+    // porque los navegadores no dejan sonar antes; el botón la silencia y se recuerda.
+    (function () {
+      var VOLUME = 0.05, KEY = "espiral.silencio";
+      var music = new Audio("assets/cancion.mp3");
+      music.loop = true;
+      music.volume = 0;
+      var btn = document.getElementById("mute");
+      var muted = false;
+      try { muted = localStorage.getItem(KEY) === "1"; } catch (e) {}
+      function apply() {
+        music.muted = muted;
+        btn.setAttribute("aria-pressed", String(muted));
+        var label = muted ? "Activar música" : "Silenciar música";
+        btn.setAttribute("aria-label", label);
+        btn.title = label;
+      }
+      apply();
+      btn.addEventListener("click", function () {
+        muted = !muted;
+        apply();
+        try { localStorage.setItem(KEY, muted ? "1" : "0"); } catch (e) {}
+      });
+      function start() {
+        window.removeEventListener("pointerdown", start, true);
+        window.removeEventListener("keydown", start, true);
+        music.play().then(function () {
+          var t0 = performance.now();
+          (function fade() {
+            var k = Math.min(1, (performance.now() - t0) / 4000);
+            music.volume = VOLUME * k;
+            if (k < 1) requestAnimationFrame(fade);
+          })();
+        }).catch(function () {});
+      }
+      window.addEventListener("pointerdown", start, true);
+      window.addEventListener("keydown", start, true);
+    })();
+  </script>
   <script type="module">
     // Recreación del video «Spiral Art»: la frase se escribe sin parar sobre una
     // espiral de Arquímedes que crece desde el centro; el brillo de cada letra

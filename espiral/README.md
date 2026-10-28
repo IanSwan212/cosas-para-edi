@@ -48,3 +48,9 @@ repetir la animación.
 - No se recrean el editor de código ni la ventana de Windows: solo el lienzo negro del programa.
 - La frase, el color y el ritmo son los del video. La fuente es Arial negrita en vez de la de Tkinter,
   y el tamaño de letra se adapta a la pantalla.
+
+## Música
+
+De fondo suena `assets/cancion.mp3` («Tattooed Heart», en vivo) en bucle, a volumen muy bajo (5 %), con
+una entrada suave. Empieza con el primer toque, clic o tecla. El botón del altavoz (abajo a la derecha)
+la silencia; se recuerda la elección.
