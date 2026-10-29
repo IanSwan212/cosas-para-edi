@@ -1,5 +1,5 @@
 // Textos del ramo.
-import { START, TOTAL_FLOWERS, formatDate } from "./calendar.js?v=mvrlbbgq";
+import { START, TOTAL_FLOWERS, formatDate } from "./calendar.js?v=mvt7cftc";
 
 const $ = (id) => document.getElementById(id);
 

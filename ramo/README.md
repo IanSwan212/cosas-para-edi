@@ -27,7 +27,7 @@ Cada flor puede abrir un sitio. Se configuran en `src/links.js` (número de flor
 Al pasar el cursor aparece una tarjeta con la vista previa del sitio (imagen `preview`), su título y la fecha
 de la flor; con un clic se abre. En pantallas táctiles, el primer toque muestra la tarjeta y su botón «Abrir».
 Arrastrar para girar no cuenta como clic. Ahora mismo, la flor 1 (26 de octubre) abre el corazón
-«Te amo en todos los idiomas» y la flor 2 (27 de octubre) abre «Spiral Art».
+«Te amo en todos los idiomas» y la flor 2 (27 de octubre) abre «Spiral Art» y la flor 3 (28 de octubre) abre «La noche del 8 de abril».
 
 Para que se puedan tocar bien, las cabezas se separan con una relajación determinista que aleja
 cada par de flores hasta dejar un hueco entre ellas, así que siempre quedan en la misma posición. Están

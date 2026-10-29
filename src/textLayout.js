@@ -6,7 +6,7 @@
 // fuera de la zona central reservada y sin solaparse con lo ya colocado.
 // Una segunda pasada con tamaño menor rellena los huecos de los bordes.
 
-import { fontString } from "./fontManager.js?v=mvrlbbgq";
+import { fontString } from "./fontManager.js?v=mvt7cftc";
 
 const SIZE_STEPS = [0.88, 1, 1, 1, 1.12, 1.25];
 const RECENT_WINDOW = 10; // no repetir una expresión entre las últimas N colocadas
