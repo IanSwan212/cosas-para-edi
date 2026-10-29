@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
-  <title>Un zorrito para ti</title>
+  <title>Kitsune</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" />
@@ -24,182 +24,204 @@
   </style>
 </head>
 <body>
-  <canvas id="art" role="img" aria-label="Un zorro rojo sentado entre hojas de otoño, dibujado con caracteres, que mueve la cola y parpadea"></canvas>
+  <canvas id="art" role="img" aria-label="Una kitsune, un zorro de nueve colas, sentada de perfil entre fuegos fatuos azules, dibujada con caracteres"></canvas>
   <header>
-    <h1>Un zorrito para ti</h1>
-    <p>Hoja por hoja, como este otoño contigo</p>
+    <h1>Kitsune</h1>
+    <p>Nueve colas para cuidarte</p>
   </header>
-  <p class="hint">Tócalo</p>
+  <p class="hint">Tócala</p>
   <script>
-    // Zorro rojo sentado de frente, en ASCII de colores como el ramo y la luna.
-    // Cada celda de la rejilla evalúa qué parte del zorro cae ahí (formas elípticas), le da luz
-    // desde arriba a la izquierda y elige un carácter según el brillo. Anima la cola, el parpadeo,
-    // las orejas y la respiración; mira hacia el puntero y, al tocarlo, mueve la cola y suelta corazones.
+    // Kitsune (zorro de nueve colas) sentada de perfil, en ASCII de colores como el ramo y la luna.
+    // Cada fotograma se pinta con trazos y degradados en un lienzo oculto de un píxel por celda;
+    // luego cada píxel se convierte en un carácter según su brillo y con su color.
+    // Las colas se mecen, la kitsune respira y parpadea y los kitsunebi (fuegos fatuos) flotan;
+    // al tocarla, las colas se abren en abanico y suben corazones.
     var RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
     var canvas = document.getElementById("art"), ctx = canvas.getContext("2d");
+    var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var look = { x: 0, y: 0 }, lookT = { x: 0, y: 0 }, wag = 0, hearts = [], leaves = [];
-    var W, H, cellW, cellH, cols, rows, scale, cx, cy;
+    var W, H, cellW, cellH, cols, rows, S, ox, oy, flare = 0, hearts = [];
 
     function hash(x, y) { var h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return h - Math.floor(h); }
-    function ell(x, y, ex, ey, rx, ry) { var a = (x - ex) / rx, b = (y - ey) / ry; return a * a + b * b; }
-    function tri(px, py, ax, ay, bx, by, qx, qy) {
-      var d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by), d2 = (px - qx) * (by - qy) - (bx - qx) * (py - qy),
-          d3 = (px - ax) * (qy - ay) - (qx - ax) * (py - ay);
-      return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
-    }
-
-    var ORANGE = [236, 112, 38], CREAM = [252, 236, 214], DARK = [58, 30, 22], BLACK = [18, 10, 10], PINK = [255, 150, 170];
-
-    // Devuelve [color, brillo base, normal aproximada nx, ny] o null si la celda está vacía.
-    function fox(x, y, t) {
-      var breath = Math.sin(t * 1.6) * 0.012;
-      var hx = look.x * 0.06, hy = look.y * 0.03 + breath;            // la cabeza sigue al puntero
-      var blink = (t % 4.3) < 0.14 ? 0.12 : 1;
-      var twitch = Math.max(0, Math.sin(t * 0.9) - 0.96) * 6;           // de vez en cuando
-      // Ojos y nariz encima de todo.
-      var ex = 0.12, ey = 0.31 + hy;
-      for (var s = -1; s <= 1; s += 2) {
-        var e = ell(x, y, s * ex + hx * 1.3, ey, 0.06, 0.042 * blink);
-        if (e < 1) {
-          var g = ell(x, y, s * ex + hx * 1.3 - 0.015, ey + 0.012, 0.016, 0.016);
-          return g < 1 && blink === 1 ? [CREAM, 1, 0, 0] : [BLACK, 0.12, 0, 0];
-        }
-      }
-      if (ell(x, y, hx * 1.6, 0.15 + hy, 0.045, 0.032) < 1) return [BLACK, 0.18, 0, 1];
-      // Rubor.
-      for (s = -1; s <= 1; s += 2) if (ell(x, y, s * 0.2 + hx, 0.2 + hy, 0.05, 0.03) < 1) return [PINK, 0.75, 0, 0];
-      // Hocico y mejillas blancas.
-      if (ell(x, y, hx * 1.4, 0.16 + hy, 0.11, 0.09) < 1 ||
-          ell(x, y, -0.15 + hx, 0.19 + hy, 0.17, 0.11) < 1 || ell(x, y, 0.15 + hx, 0.19 + hy, 0.17, 0.11) < 1)
-        return [CREAM, 0.95, (x - hx) * 2, (y - 0.2 - hy) * 3];
-      // Orejas (borde oscuro, interior crema).
-      for (s = -1; s <= 1; s += 2) {
-        var tw = s === 1 ? twitch : 0;
-        var ax = s * (0.32 + tw * 0.05) + hx, ay = 0.78 + hy - tw * 0.04;
-        var bx = s * 0.08 + hx, by = 0.46 + hy, qx = s * 0.37 + hx, qy = 0.36 + hy;
-        if (tri(x, y, ax, ay, bx, by, qx, qy)) {
-          var mx = (ax + bx + qx) / 3, my = (ay + by + qy) / 3;
-          var inner = tri(x, y, mx + (ax - mx) * 0.62, my + (ay - my) * 0.62, mx + (bx - mx) * 0.62,
-            my + (by - my) * 0.62, mx + (qx - mx) * 0.62, my + (qy - my) * 0.62);
-          if (inner) return [CREAM, 0.7, 0, 0];
-          return y > ay - 0.1 ? [DARK, 0.4, s, 1] : [ORANGE, 0.85, s * 0.5, 0.5];
-        }
-      }
-      // Cabeza.
-      var hd = ell(x, y, hx, 0.29 + hy, 0.35, 0.27);
-      if (hd < 1) return [ORANGE, 0.9, (x - hx) / 0.35, (y - 0.29 - hy) / 0.27];
-      for (s = -1; s <= 1; s += 2)
-        if (tri(x, y, s * 0.4 + hx, 0.14 + hy, s * 0.24 + hx, 0.27 + hy, s * 0.14 + hx, 0.1 + hy)) return [CREAM, 0.92, s, -0.3];
-      // Patas delanteras con calcetines oscuros.
-      for (s = -1; s <= 1; s += 2) {
-        if (Math.abs(x - s * 0.11) < 0.065 && y > -0.86 && y < -0.4) return [y < -0.66 ? DARK : ORANGE, y < -0.66 ? 0.45 : 0.8, s * 0.3, 0];
-        if (ell(x, y, s * 0.12, -0.86, 0.085, 0.045) < 1) return [DARK, 0.4, 0, 1];
-      }
-      // Pecho.
-      if (ell(x, y, 0, -0.18 + breath, 0.17, 0.3) < 1) return [CREAM, 0.95, x / 0.17, 0];
-      // Cuerpo.
-      var bd = ell(x, y, 0, -0.42 + breath, 0.38 + breath, 0.46);
-      if (bd < 1) return [ORANGE, 0.85, x / 0.38, (y + 0.42) / 0.46];
-      // Cola: curva que sale de detrás y se enrosca a la derecha; se mece.
-      var sway = Math.sin(t * (1.4 + wag * 6)) * (0.1 + wag * 0.25);
-      for (var i = 0; i <= 24; i++) {
-        var u = i / 24;
-        var px = 0.2 + 0.62 * u - 0.12 * u * u * u + sway * u * u * 0.5;
-        var py = -0.8 + 0.06 * u + 0.42 * u * u * u + sway * u * u * 0.4;
-        var r = 0.09 + 0.12 * Math.sin(Math.PI * Math.min(1, 0.2 + u * 0.95));
-        var d = ell(x, y, px, py, r, r);
-        if (d < 1) return u > 0.82 ? [CREAM, 0.95, 0, 0] : [ORANGE, 0.82, (x - px) / r, (y - py) / r];
-      }
-      return null;
-    }
 
     function resize() {
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
       W = window.innerWidth; H = window.innerHeight;
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      cellH = Math.max(6, Math.min(9, Math.min(W, H) / 110)); cellW = cellH * 0.62;
+      cellH = Math.max(4.5, Math.min(7, Math.min(W, H) / 150)); cellW = cellH * 0.62;
       cols = Math.ceil(W / cellW); rows = Math.ceil(H / cellH);
-      scale = Math.min(W * 0.55, H * 0.36); cx = W * 0.5; cy = H * 0.55;
-      if (!leaves.length) for (var i = 0; i < 46; i++) leaves.push(newLeaf(true));
+      off.width = cols; off.height = rows;
+      // Escena en unidades: la kitsune ocupa x 10..150, y −35..97 (y hacia abajo).
+      S = Math.min(W / 185, (H * 0.74) / 150);
+      ox = W / 2 - 88 * S; oy = H * 0.9 - 97 * S;
     }
-    var LEAF_COLORS = ["#e8742c", "#d94f2b", "#f2a33a", "#b8492a", "#f5c04a"];
-    function newLeaf(anywhere) {
-      return { x: Math.random() * W, y: anywhere ? Math.random() * H : -20, v: 14 + Math.random() * 22,
-        ph: Math.random() * 6.3, c: LEAF_COLORS[(Math.random() * LEAF_COLORS.length) | 0],
-        g: "*%&@#"[(Math.random() * 5) | 0] };
+
+    // Una cola: banda que se ensancha y se afila, con la punta blanca.
+    function tail(c, bx, by, ang, len, curl, wid) {
+      var n = 22, L = [], R = [];
+      var dx = Math.cos(ang), dy = Math.sin(ang), px = -dy, py = dx;
+      var tipX = 0, tipY = 0;
+      for (var i = 0; i <= n; i++) {
+        var u = i / n;
+        var x = bx + dx * len * u + px * curl * u * u, y = by + dy * len * u + py * curl * u * u;
+        var tx = dx + px * curl * 2 * u / len, ty = dy + py * curl * 2 * u / len, tl = Math.hypot(tx, ty);
+        var r = wid * Math.pow(Math.sin(Math.PI * Math.min(1, 0.18 + u * 0.82)), 0.45);
+        L.push([x - ty / tl * r, y + tx / tl * r]); R.push([x + ty / tl * r, y - tx / tl * r]);
+        tipX = x; tipY = y;
+      }
+      c.beginPath(); c.moveTo(L[0][0], L[0][1]);
+      for (i = 1; i <= n; i++) c.lineTo(L[i][0], L[i][1]);
+      for (i = n; i >= 0; i--) c.lineTo(R[i][0], R[i][1]);
+      c.closePath();
+      var g = c.createLinearGradient(bx, by, tipX, tipY);
+      g.addColorStop(0, "#5a1f0b"); g.addColorStop(0.35, "#c4521c"); g.addColorStop(0.7, "#f08a3c");
+      g.addColorStop(0.84, "#f6c39a"); g.addColorStop(0.92, "#fff6ec"); g.addColorStop(1, "#ffffff");
+      c.fillStyle = g; c.fill();
+      c.strokeStyle = "rgba(0,0,0,0.9)"; c.lineWidth = 1.2; c.stroke();
+    }
+
+    function path(c, pts) {
+      c.beginPath(); c.moveTo(pts[0], pts[1]);
+      for (var i = 2; i < pts.length; i += 6) c.bezierCurveTo(pts[i], pts[i + 1], pts[i + 2], pts[i + 3], pts[i + 4], pts[i + 5]);
+      c.closePath();
+    }
+
+    function scene(c, t) {
+      var breath = Math.sin(t * 1.5) * 0.6;
+      // Kitsunebi detrás.
+      for (var k = 0; k < 6; k++) {
+        var a = t * 0.25 + k * 0.9, fx = 85 + Math.cos(a) * (72 + 6 * Math.sin(t + k)), fy = 25 + Math.sin(a * 1.3 + k) * 45;
+        var fr = 3 + 1 * Math.sin(t * 3 + k * 2);
+        var g = c.createRadialGradient(fx, fy, 0, fx, fy, fr * 2.4);
+        g.addColorStop(0, "rgba(235,250,255,1)"); g.addColorStop(0.3, "rgba(110,190,255,0.95)");
+        g.addColorStop(0.7, "rgba(40,90,220,0.45)"); g.addColorStop(1, "rgba(20,40,160,0)");
+        c.fillStyle = g; c.beginPath(); c.arc(fx, fy, fr * 2.4, 0, 7); c.fill();
+      }
+      // Nueve colas en abanico detrás del cuerpo.
+      for (var i = 0; i < 9; i++) {
+        var f = i / 8;
+        var ang = -2.05 + f * 1.6 + flare * (f - 0.5) * 0.6 + Math.sin(t * 1.1 + i * 0.7) * 0.07;
+        var len = 70 + 8 * Math.sin(i * 2.3) + flare * 10;
+        var curl = (f - 0.5) * 16 + Math.sin(t * 0.9 + i) * 6;
+        tail(c, 74, 72, ang, len, curl, 10);
+      }
+      // Cuerpo sentado de perfil, mirando a la izquierda.
+      var gb = c.createLinearGradient(30, 30, 85, 95);
+      gb.addColorStop(0, "#f39448"); gb.addColorStop(0.55, "#cf5e22"); gb.addColorStop(1, "#6e2810");
+      path(c, [40, 36 + breath,
+        33, 46, 30, 58, 33, 68,          // pecho
+        34, 76, 33, 86, 32, 93,          // pata delantera
+        30, 96, 39, 97, 40, 93,          // mano
+        41, 84, 42, 78, 47, 78,          // detrás de la pata
+        52, 70, 66, 64, 74, 72,          // muslo
+        80, 80, 80, 92, 76, 96,          // anca
+        70, 98, 56, 98, 52, 95,          // pie trasero
+        60, 92, 62, 88, 62, 84,
+        66, 84, 84, 88, 84, 74,          // espalda baja
+        84, 58, 70, 44, 58, 32,          // lomo
+        54, 28, 46, 28, 40, 36 + breath]);
+      c.fillStyle = gb; c.fill();
+      c.strokeStyle = "#000"; c.lineWidth = 1.6; c.stroke();
+      // Pecho blanco.
+      c.fillStyle = "#fbefe2";
+      path(c, [36, 40, 31, 50, 31, 62, 35, 70, 39, 62, 41, 50, 44, 40, 42, 36, 38, 36, 36, 40]);
+      c.fill();
+      // Patas oscuras (calcetines).
+      c.fillStyle = "#2a120a";
+      path(c, [33, 80, 33, 87, 32, 93, 31, 96, 35, 97, 39, 97, 40, 93, 40, 87, 41, 80, 37, 79, 35, 79, 33, 80]); c.fill();
+      path(c, [52, 95, 56, 98, 66, 98, 70, 97, 68, 93, 62, 92, 58, 92, 54, 92, 52, 93, 52, 95]); c.fill();
+      // Cabeza.
+      var hy = breath * 0.5;
+      c.save(); c.translate(0, hy);
+      var gh = c.createLinearGradient(20, 15, 58, 42);
+      gh.addColorStop(0, "#f7a45c"); gh.addColorStop(1, "#b9461a");
+      // Orejas.
+      c.fillStyle = "#3a160b"; c.strokeStyle = "#000"; c.lineWidth = 1.4;
+      path(c, [50, 22, 51, 14, 53, 7, 56, 1, 59, 9, 60, 18, 58, 28, 54, 26, 52, 24, 50, 22]); c.stroke(); c.fill();
+      c.fillStyle = "#d8662a";
+      path(c, [41, 22, 41, 14, 42, 7, 44, 1, 48, 8, 51, 16, 52, 24, 48, 23, 44, 23, 41, 22]); c.stroke(); c.fill();
+      c.fillStyle = "#f3d9c2";
+      path(c, [43, 20, 43, 14, 44, 9, 45, 6, 47, 11, 49, 16, 49, 21, 47, 21, 45, 21, 43, 20]); c.fill();
+      // Cráneo y hocico largo.
+      c.fillStyle = gh;
+      c.strokeStyle = "#000"; c.lineWidth = 1.6;
+      path(c, [58, 30, 58, 22, 50, 17, 42, 19,
+        36, 20, 31, 25, 25, 29,            // frente y puente
+        20, 31, 16, 32, 14, 34,            // nariz
+        16, 37, 22, 38, 28, 38,            // mandíbula
+        34, 42, 42, 46, 50, 44,            // mejilla
+        56, 40, 58, 36, 58, 30]);
+      c.stroke(); c.fill();
+      // Hocico y mejilla blancos.
+      c.fillStyle = "#fbefe2";
+      path(c, [15, 35, 20, 37, 26, 37, 30, 37, 36, 40, 42, 44, 50, 44, 44, 47, 36, 46, 28, 42, 20, 39, 15, 35]); c.fill();
+      // Nariz y boca.
+      c.fillStyle = "#120806"; c.beginPath(); c.ellipse(14.6, 33.6, 1.9, 1.4, 0, 0, 7); c.fill();
+      c.strokeStyle = "#2a120a"; c.lineWidth = 0.6;
+      c.beginPath(); c.moveTo(16, 36); c.quadraticCurveTo(22, 37.5, 27, 36.8); c.stroke();
+      // Ojo almendrado (parpadea).
+      var blink = (t % 5.1) < 0.15 ? 0.15 : 1;
+      c.fillStyle = "#1a0b06"; c.beginPath(); c.ellipse(34, 26.5, 3.4, 1.7 * blink, -0.25, 0, 7); c.fill();
+      if (blink === 1) {
+        c.fillStyle = "#f2b630"; c.beginPath(); c.ellipse(34.4, 26.4, 2.2, 1.3, -0.25, 0, 7); c.fill();
+        c.fillStyle = "#120806"; c.beginPath(); c.ellipse(34.4, 26.4, 0.6, 1.2, 0, 0, 7); c.fill();
+        c.fillStyle = "#ffffff"; c.beginPath(); c.arc(33.6, 25.8, 0.5, 0, 7); c.fill();
+      }
+      // Marcas rojas de kitsune en la frente.
+      c.strokeStyle = "#ff3a3a"; c.lineWidth = 1.1;
+      c.beginPath(); c.moveTo(38, 22); c.quadraticCurveTo(42, 18.5, 46, 21); c.stroke();
+      c.beginPath(); c.moveTo(30, 29); c.quadraticCurveTo(34, 31.5, 39, 29.5); c.stroke();
+      c.restore();
     }
 
     function frame(t) {
+      oc.setTransform(1, 0, 0, 1, 0, 0); oc.clearRect(0, 0, cols, rows);
+      oc.setTransform(S / cellW, 0, 0, S / cellH, ox / cellW, oy / cellH);
+      scene(oc, t);
+      var data = oc.getImageData(0, 0, cols, rows).data;
       ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
       ctx.font = "700 " + cellH + "px 'Courier New', monospace"; ctx.textBaseline = "top";
-      look.x += (lookT.x - look.x) * 0.06; look.y += (lookT.y - look.y) * 0.06;
-      wag = Math.max(0, wag - 0.006);
       var groups = {};
       function put(ch, c, x, y) { (groups[c] || (groups[c] = [])).push(ch, x, y); }
-      // Estrellas tenues.
-      for (var j = 0; j < rows * 0.55; j += 1) for (var i = 0; i < cols; i++) {
-        var hsh = hash(i, j);
-        if (hsh > 0.996) put(hsh > 0.999 ? "+" : ".", "rgba(246,231,234," + (0.25 + 0.4 * Math.abs(Math.sin(t * 0.8 + hsh * 50))).toFixed(2) + ")", i * cellW, j * cellH);
-      }
-      // Suelo de hojarasca.
-      var ground = cy + 0.86 * scale;
-      for (j = Math.floor(ground / cellH); j < rows; j++) for (i = 0; i < cols; i++) {
-        var h2 = hash(i * 1.7, j * 2.3), depth = (j * cellH - ground) / (H - ground + 1);
-        if (h2 < 0.55 + depth * 0.4) put(RAMP[2 + ((h2 * 10) | 0)], LEAF_COLORS[(h2 * 50 | 0) % 5], i * cellW, j * cellH);
-      }
-      // Zorro.
-      var shadow = 0;
-      for (j = 0; j < rows; j++) {
-        var y = (cy - j * cellH) / scale;
-        if (y < -0.95 || y > 0.8) continue;
-        for (i = 0; i < cols; i++) {
-          var x = (i * cellW - cx) / scale;
-          if (x < -0.55 || x > 1.05) continue;
-          var f = fox(x, y, t);
-          if (!f) continue;
-          var light = 0.62 + 0.38 * Math.max(-1, Math.min(1, -f[2] * 0.6 + f[3] * 0.8)) * 0.5 + 0.19;
-          var fur = 0.82 + 0.18 * hash(i, j + ((t * 2) | 0) * 0.0);
-          var lum = Math.max(0.05, Math.min(1, f[1] * light * fur));
-          var c = f[0], k = 0.45 + 0.65 * lum;
-          var col = "rgb(" + Math.min(255, c[0] * k | 0) + "," + Math.min(255, c[1] * k | 0) + "," + Math.min(255, c[2] * k | 0) + ")";
-          put(RAMP[Math.min(RAMP.length - 1, 4 + (lum * (RAMP.length - 5)) | 0)], col, i * cellW, j * cellH);
+      var groundRow = Math.floor((oy + 97.5 * S) / cellH);
+      for (var j = 0; j < rows; j++) for (var i = 0; i < cols; i++) {
+        var p = (j * cols + i) * 4, a = data[p + 3] / 255;
+        if (a < 0.08) {
+          var h = hash(i, j);
+          if (j < groundRow && h > 0.997) put(".", "rgba(220,230,255," + (0.3 + 0.4 * Math.abs(Math.sin(t * 0.7 + h * 60))).toFixed(2) + ")", i * cellW, j * cellH);
+          else if (j >= groundRow && h < 0.35 - (j - groundRow) * 0.02) put(RAMP[2 + (h * 20 | 0)], "#2c3a4a", i * cellW, j * cellH);
+          continue;
         }
+        var r = data[p] / a, g = data[p + 1] / a, b = data[p + 2] / a;   // sin premultiplicar
+        var lum = (0.3 * r + 0.55 * g + 0.15 * b) / 255 * a;
+        lum = Math.min(1, lum * (0.85 + 0.3 * hash(i * 0.7, j * 1.3)));
+        var k = 1 / Math.max(0.35, Math.max(r, g, b) / 255);             // colores vivos aunque sean oscuros
+        var col = "rgb(" + Math.min(255, r * k * (0.45 + 0.55 * a) | 0) + "," + Math.min(255, g * k * (0.45 + 0.55 * a) | 0) + "," + Math.min(255, b * k * (0.45 + 0.55 * a) | 0) + ")";
+        put(RAMP[Math.max(1, Math.min(RAMP.length - 1, (lum * (RAMP.length - 1)) | 0))], col, i * cellW, j * cellH);
       }
-      // Hojas que caen.
-      var dt = 1 / 60;
-      leaves.forEach(function (l, n) {
-        l.y += l.v * dt * (reduce ? 0 : 1); l.x += Math.sin(t * 1.2 + l.ph) * 0.5;
-        if (l.y > H + 10) leaves[n] = newLeaf(false);
-        put(l.g, l.c, l.x, l.y);
-      });
-      // Corazones al tocarlo.
       hearts = hearts.filter(function (h) { return t - h.t0 < 2.6; });
       hearts.forEach(function (h) {
-        var a = (t - h.t0) / 2.6;
-        put("♥", "rgba(255,120,150," + (1 - a).toFixed(2) + ")", h.x + Math.sin(a * 9 + h.ph) * 14, h.y - a * 140);
+        var q = Math.max(0, (t - h.t0) / 2.6);
+        put("♥", "rgba(255,120,150," + (1 - q).toFixed(2) + ")", h.x + Math.sin(q * 9 + h.ph) * 14, h.y - q * 160);
       });
-      for (var c2 in groups) {
-        ctx.fillStyle = c2; var g = groups[c2];
-        for (var m = 0; m < g.length; m += 3) ctx.fillText(g[m], g[m + 1], g[m + 2]);
+      for (var c in groups) {
+        ctx.fillStyle = c; var gr = groups[c];
+        for (var m = 0; m < gr.length; m += 3) ctx.fillText(gr[m], gr[m + 1], gr[m + 2]);
       }
+      flare = Math.max(0, flare - 0.008);
     }
 
     function loop(ms) { frame(ms / 1000); requestAnimationFrame(loop); }
     window.addEventListener("resize", resize);
-    window.addEventListener("pointermove", function (e) {
-      lookT.x = Math.max(-1, Math.min(1, (e.clientX - cx) / (W * 0.4)));
-      lookT.y = Math.max(-1, Math.min(1, (cy - e.clientY) / (H * 0.4)));
-    });
-    canvas.addEventListener("pointerdown", function (e) {
-      wag = 1;
-      for (var i = 0; i < 7; i++) hearts.push({ x: cx + (Math.random() - 0.3) * scale * 0.5, y: cy - scale * 0.5,
-        t0: performance.now() / 1000 + i * 0.12, ph: Math.random() * 6 });
+    canvas.addEventListener("pointerdown", function () {
+      flare = 1;
+      var now = performance.now() / 1000;
+      for (var i = 0; i < 8; i++) hearts.push({ x: ox + (30 + Math.random() * 40) * S, y: oy + 20 * S, t0: now + i * 0.12, ph: Math.random() * 6 });
     });
     resize();
-    window.__zorro = { frame: frame };
-    if (reduce) frame(1); else requestAnimationFrame(loop);
+    window.__zorro = { frame: frame, scene: scene };
+    if (reduce || /debug/.test(location.search)) frame(1); else requestAnimationFrame(loop);
   </script>
 </body>
 </html>
