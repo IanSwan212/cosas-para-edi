@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
-  <title>Kitsune</title>
+  <title>Un zorro para ti</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" />
@@ -24,18 +24,19 @@
   </style>
 </head>
 <body>
-  <canvas id="art" role="img" aria-label="Una kitsune, un zorro de nueve colas, sentada de perfil entre fuegos fatuos azules, dibujada con caracteres"></canvas>
+  <canvas id="art" role="img" aria-label="Un zorro rojo elegante y estilizado, de pie y de perfil, con una cola larga que ondea entre luciérnagas, dibujado con caracteres"></canvas>
   <header>
-    <h1>Kitsune</h1>
-    <p>Nueve colas para cuidarte</p>
+    <h1>Un zorro para ti</h1>
+    <p>Elegante, como tú</p>
   </header>
-  <p class="hint">Tócala</p>
+  <p class="hint">Tócalo</p>
   <script>
-    // Kitsune (zorro de nueve colas) sentada de perfil, en ASCII de colores como el ramo y la luna.
+    // Zorro rojo estilizado (la estética alargada y elegante de las kitsune, con una sola cola),
+    // de pie y de perfil, en ASCII de colores como el ramo y la luna.
     // Cada fotograma se pinta con trazos y degradados en un lienzo oculto de un píxel por celda;
     // luego cada píxel se convierte en un carácter según su brillo y con su color.
-    // Las colas se mecen, la kitsune respira y parpadea y los kitsunebi (fuegos fatuos) flotan;
-    // al tocarla, las colas se abren en abanico y suben corazones.
+    // La cola ondea, el zorro respira, parpadea y mueve la oreja, y flotan luciérnagas;
+    // al tocarlo, sacude la cola y suben corazones.
     var RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
     var canvas = document.getElementById("art"), ctx = canvas.getContext("2d");
     var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
@@ -52,33 +53,34 @@
       cellH = Math.max(4.5, Math.min(7, Math.min(W, H) / 150)); cellW = cellH * 0.62;
       cols = Math.ceil(W / cellW); rows = Math.ceil(H / cellH);
       off.width = cols; off.height = rows;
-      // Escena en unidades: la kitsune ocupa x 10..150, y −35..97 (y hacia abajo).
-      S = Math.min(W / 185, (H * 0.74) / 150);
-      ox = W / 2 - 88 * S; oy = H * 0.9 - 97 * S;
+      // Escena en unidades: el zorro ocupa x 8..172, y −8..97 (y hacia abajo).
+      S = Math.min(W / 190, (H * 0.62) / 106);
+      ox = W / 2 - 90 * S; oy = H * 0.88 - 97 * S;
     }
 
-    // Una cola: banda que se ensancha y se afila, con la punta blanca.
-    function tail(c, bx, by, ang, len, curl, wid) {
-      var n = 22, L = [], R = [];
-      var dx = Math.cos(ang), dy = Math.sin(ang), px = -dy, py = dx;
-      var tipX = 0, tipY = 0;
+    function bez(p, u) {
+      var v = 1 - u;
+      return [v * v * v * p[0] + 3 * v * v * u * p[2] + 3 * v * u * u * p[4] + u * u * u * p[6],
+              v * v * v * p[1] + 3 * v * v * u * p[3] + 3 * v * u * u * p[5] + u * u * u * p[7]];
+    }
+
+    // Cola larga y esponjosa que ondea: banda a lo largo de una curva, con la punta blanca.
+    function tail(c, p, wid) {
+      var n = 40, L = [], R = [];
       for (var i = 0; i <= n; i++) {
-        var u = i / n;
-        var x = bx + dx * len * u + px * curl * u * u, y = by + dy * len * u + py * curl * u * u;
-        var tx = dx + px * curl * 2 * u / len, ty = dy + py * curl * 2 * u / len, tl = Math.hypot(tx, ty);
-        var r = wid * Math.pow(Math.sin(Math.PI * Math.min(1, 0.18 + u * 0.82)), 0.45);
-        L.push([x - ty / tl * r, y + tx / tl * r]); R.push([x + ty / tl * r, y - tx / tl * r]);
-        tipX = x; tipY = y;
+        var u = i / n, a = bez(p, Math.max(0, u - 0.01)), b = bez(p, Math.min(1, u + 0.01)), m = bez(p, u);
+        var tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1;
+        var r = wid * Math.pow(Math.sin(Math.PI * Math.min(1, 0.08 + u * 0.9)), 0.55) * (0.55 + 0.45 * u);
+        L.push([m[0] - ty / tl * r, m[1] + tx / tl * r]); R.push([m[0] + ty / tl * r, m[1] - tx / tl * r]);
       }
       c.beginPath(); c.moveTo(L[0][0], L[0][1]);
       for (i = 1; i <= n; i++) c.lineTo(L[i][0], L[i][1]);
       for (i = n; i >= 0; i--) c.lineTo(R[i][0], R[i][1]);
       c.closePath();
-      var g = c.createLinearGradient(bx, by, tipX, tipY);
-      g.addColorStop(0, "#5a1f0b"); g.addColorStop(0.35, "#c4521c"); g.addColorStop(0.7, "#f08a3c");
-      g.addColorStop(0.84, "#f6c39a"); g.addColorStop(0.92, "#fff6ec"); g.addColorStop(1, "#ffffff");
+      var g = c.createLinearGradient(p[0], p[1], p[6], p[7]);
+      g.addColorStop(0, "#9a3a14"); g.addColorStop(0.55, "#e2702c"); g.addColorStop(0.82, "#f09a52");
+      g.addColorStop(0.9, "#fbe6d2"); g.addColorStop(1, "#ffffff");
       c.fillStyle = g; c.fill();
-      c.strokeStyle = "rgba(0,0,0,0.9)"; c.lineWidth = 1.2; c.stroke();
     }
 
     function path(c, pts) {
@@ -87,91 +89,84 @@
       c.closePath();
     }
 
+    // Pata larga y fina: tramo naranja arriba y calcetín oscuro abajo.
+    function leg(c, pts, w, far) {
+      c.lineCap = "round"; c.lineJoin = "round";
+      c.strokeStyle = far ? "#8a3412" : "#c95a20"; c.lineWidth = w;
+      c.beginPath(); c.moveTo(pts[0], pts[1]);
+      for (var i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+      c.stroke();
+      var n = pts.length;
+      c.strokeStyle = far ? "#140806" : "#24100a"; c.lineWidth = w * 0.85;
+      c.beginPath(); c.moveTo(pts[n - 4], pts[n - 3]); c.lineTo(pts[n - 2], pts[n - 1]); c.lineTo(pts[n - 2] - 3.2, pts[n - 1]); c.stroke();
+    }
+
     function scene(c, t) {
-      var breath = Math.sin(t * 1.5) * 0.6;
-      // Kitsunebi detrás.
-      for (var k = 0; k < 6; k++) {
-        var a = t * 0.25 + k * 0.9, fx = 85 + Math.cos(a) * (72 + 6 * Math.sin(t + k)), fy = 25 + Math.sin(a * 1.3 + k) * 45;
-        var fr = 3 + 1 * Math.sin(t * 3 + k * 2);
-        var g = c.createRadialGradient(fx, fy, 0, fx, fy, fr * 2.4);
-        g.addColorStop(0, "rgba(235,250,255,1)"); g.addColorStop(0.3, "rgba(110,190,255,0.95)");
-        g.addColorStop(0.7, "rgba(40,90,220,0.45)"); g.addColorStop(1, "rgba(20,40,160,0)");
-        c.fillStyle = g; c.beginPath(); c.arc(fx, fy, fr * 2.4, 0, 7); c.fill();
+      var breath = Math.sin(t * 1.4) * 0.5, swish = Math.sin(t * 0.9) + flare * Math.sin(t * 7) * 1.6;
+      // Luciérnagas doradas que flotan despacio.
+      for (var k = 0; k < 9; k++) {
+        var fx = 20 + ((k * 37 + t * (2 + k % 3)) % 160), fy = 5 + 70 * hash(k, 3) + Math.sin(t * 0.7 + k) * 8;
+        var fr = 0.7 + 0.5 * Math.max(0, Math.sin(t * 1.8 + k * 1.7));
+        var g = c.createRadialGradient(fx, fy, 0, fx, fy, fr * 2.5);
+        g.addColorStop(0, "rgba(255,240,190,1)"); g.addColorStop(0.4, "rgba(255,190,90,0.7)"); g.addColorStop(1, "rgba(255,150,60,0)");
+        c.fillStyle = g; c.beginPath(); c.arc(fx, fy, fr * 2.5, 0, 7); c.fill();
       }
-      // Nueve colas en abanico detrás del cuerpo.
-      for (var i = 0; i < 9; i++) {
-        var f = i / 8;
-        var ang = -2.05 + f * 1.6 + flare * (f - 0.5) * 0.6 + Math.sin(t * 1.1 + i * 0.7) * 0.07;
-        var len = 70 + 8 * Math.sin(i * 2.3) + flare * 10;
-        var curl = (f - 0.5) * 16 + Math.sin(t * 0.9 + i) * 6;
-        tail(c, 74, 72, ang, len, curl, 10);
-      }
-      // Cuerpo sentado de perfil, mirando a la izquierda.
-      var gb = c.createLinearGradient(30, 30, 85, 95);
-      gb.addColorStop(0, "#f39448"); gb.addColorStop(0.55, "#cf5e22"); gb.addColorStop(1, "#6e2810");
-      path(c, [40, 36 + breath,
-        33, 46, 30, 58, 33, 68,          // pecho
-        34, 76, 33, 86, 32, 93,          // pata delantera
-        30, 96, 39, 97, 40, 93,          // mano
-        41, 84, 42, 78, 47, 78,          // detrás de la pata
-        52, 70, 66, 64, 74, 72,          // muslo
-        80, 80, 80, 92, 76, 96,          // anca
-        70, 98, 56, 98, 52, 95,          // pie trasero
-        60, 92, 62, 88, 62, 84,
-        66, 84, 84, 88, 84, 74,          // espalda baja
-        84, 58, 70, 44, 58, 32,          // lomo
-        54, 28, 46, 28, 40, 36 + breath]);
+      // Patas del lado lejano.
+      leg(c, [50, 58, 51, 78, 53, 96], 4.2, true);
+      leg(c, [92, 56, 97, 72, 90, 83, 91, 96], 4.6, true);
+      // Cola larga que ondea.
+      tail(c, [102, 44, 126 + swish * 3, 40 - swish * 2, 132, 76 + swish * 3, 158 + swish * 4, 58 - swish * 5], 10.5);
+      // Torso alargado y cuello alto.
+      var gb = c.createLinearGradient(40, 30, 70, 66);
+      gb.addColorStop(0, "#f39448"); gb.addColorStop(0.6, "#d0601f"); gb.addColorStop(1, "#7a2c10");
+      path(c, [33, 36,
+        35, 47, 41, 56 + breath, 52, 58 + breath,
+        66, 60 + breath, 82, 55, 97, 55,
+        107, 52, 108, 42, 100, 39,
+        86, 33 - breath, 66, 37 - breath, 52, 35,
+        46, 31, 44, 25, 43, 19,
+        38, 22, 33, 28, 33, 36]);
       c.fillStyle = gb; c.fill();
-      c.strokeStyle = "#000"; c.lineWidth = 1.6; c.stroke();
+      c.strokeStyle = "#000"; c.lineWidth = 1.1; c.stroke();
       // Pecho blanco.
       c.fillStyle = "#fbefe2";
-      path(c, [36, 40, 31, 50, 31, 62, 35, 70, 39, 62, 41, 50, 44, 40, 42, 36, 38, 36, 36, 40]);
-      c.fill();
-      // Patas oscuras (calcetines).
-      c.fillStyle = "#2a120a";
-      path(c, [33, 80, 33, 87, 32, 93, 31, 96, 35, 97, 39, 97, 40, 93, 40, 87, 41, 80, 37, 79, 35, 79, 33, 80]); c.fill();
-      path(c, [52, 95, 56, 98, 66, 98, 70, 97, 68, 93, 62, 92, 58, 92, 54, 92, 52, 93, 52, 95]); c.fill();
-      // Cabeza.
-      var hy = breath * 0.5;
-      c.save(); c.translate(0, hy);
-      var gh = c.createLinearGradient(20, 15, 58, 42);
-      gh.addColorStop(0, "#f7a45c"); gh.addColorStop(1, "#b9461a");
-      // Orejas.
-      c.fillStyle = "#3a160b"; c.strokeStyle = "#000"; c.lineWidth = 1.4;
-      path(c, [50, 22, 51, 14, 53, 7, 56, 1, 59, 9, 60, 18, 58, 28, 54, 26, 52, 24, 50, 22]); c.stroke(); c.fill();
-      c.fillStyle = "#d8662a";
-      path(c, [41, 22, 41, 14, 42, 7, 44, 1, 48, 8, 51, 16, 52, 24, 48, 23, 44, 23, 41, 22]); c.stroke(); c.fill();
-      c.fillStyle = "#f3d9c2";
-      path(c, [43, 20, 43, 14, 44, 9, 45, 6, 47, 11, 49, 16, 49, 21, 47, 21, 45, 21, 43, 20]); c.fill();
-      // Cráneo y hocico largo.
+      path(c, [33, 30, 33, 40, 36, 50, 43, 56, 44, 48, 42, 40, 40, 30, 37, 27, 34, 27, 33, 30]); c.fill();
+      // Patas del lado cercano.
+      leg(c, [44, 54, 43, 76, 41, 96], 4.6, false);
+      leg(c, [98, 52, 104, 70, 97, 82, 98, 96], 5, false);
+      // Cabeza erguida, hocico largo y orejas altas.
+      var nod = Math.sin(t * 0.6) * 0.8, twitch = Math.max(0, Math.sin(t * 0.8) - 0.95) * 30;
+      c.save(); c.translate(38, 20); c.rotate(nod * 0.03); c.translate(-38, -20 + breath * 0.5);
+      c.strokeStyle = "#000"; c.lineWidth = 1;
+      c.fillStyle = "#3a160b";
+      path(c, [43, 11, 44, 5, 46, 0, 48, -6 - twitch * 0.1, 50, 2, 50, 8, 49, 14, 47, 13, 45, 12, 43, 11]); c.stroke(); c.fill();
+      var gh = c.createLinearGradient(14, 8, 46, 28);
+      gh.addColorStop(0, "#f6a35a"); gh.addColorStop(1, "#bf4c1b");
       c.fillStyle = gh;
-      c.strokeStyle = "#000"; c.lineWidth = 1.6;
-      path(c, [58, 30, 58, 22, 50, 17, 42, 19,
-        36, 20, 31, 25, 25, 29,            // frente y puente
-        20, 31, 16, 32, 14, 34,            // nariz
-        16, 37, 22, 38, 28, 38,            // mandíbula
-        34, 42, 42, 46, 50, 44,            // mejilla
-        56, 40, 58, 36, 58, 30]);
+      path(c, [46, 18, 46, 10, 41, 7, 35, 9,
+        29, 11, 21, 15, 12, 19,
+        11, 21, 17, 23, 24, 23,
+        28, 26, 32, 28, 37, 28,
+        43, 27, 46, 23, 46, 18]);
       c.stroke(); c.fill();
-      // Hocico y mejilla blancos.
+      c.fillStyle = "#d8662a";
+      path(c, [36, 10, 36, 4, 38, -2, 40, -8, 43, -1, 44, 5, 44, 11, 41, 10, 38, 10, 36, 10]); c.stroke(); c.fill();
+      c.fillStyle = "#f3d9c2";
+      path(c, [38, 9, 38, 4, 39, 0, 40, -4, 42, 1, 42, 5, 42, 9, 41, 9, 39, 9, 38, 9]); c.fill();
+      // Mejilla y mandíbula blancas.
       c.fillStyle = "#fbefe2";
-      path(c, [15, 35, 20, 37, 26, 37, 30, 37, 36, 40, 42, 44, 50, 44, 44, 47, 36, 46, 28, 42, 20, 39, 15, 35]); c.fill();
-      // Nariz y boca.
-      c.fillStyle = "#120806"; c.beginPath(); c.ellipse(14.6, 33.6, 1.9, 1.4, 0, 0, 7); c.fill();
-      c.strokeStyle = "#2a120a"; c.lineWidth = 0.6;
-      c.beginPath(); c.moveTo(16, 36); c.quadraticCurveTo(22, 37.5, 27, 36.8); c.stroke();
-      // Ojo almendrado (parpadea).
-      var blink = (t % 5.1) < 0.15 ? 0.15 : 1;
-      c.fillStyle = "#1a0b06"; c.beginPath(); c.ellipse(34, 26.5, 3.4, 1.7 * blink, -0.25, 0, 7); c.fill();
+      path(c, [12, 20, 17, 22, 24, 22, 29, 23, 34, 25, 40, 26, 44, 24, 40, 30, 32, 30, 26, 27, 18, 24, 12, 20]); c.fill();
+      // Nariz.
+      c.fillStyle = "#120806"; c.beginPath(); c.ellipse(11.8, 19.6, 1.6, 1.2, 0.3, 0, 7); c.fill();
+      // Ojo rasgado y sereno (parpadea).
+      var blink = (t % 5.3) < 0.15 ? 0.15 : 1;
+      c.save(); c.translate(28, 13.5); c.rotate(-0.3);
+      c.fillStyle = "#1a0b06"; c.beginPath(); c.ellipse(0, 0, 3.2, 1.2 * blink, 0, 0, 7); c.fill();
       if (blink === 1) {
-        c.fillStyle = "#f2b630"; c.beginPath(); c.ellipse(34.4, 26.4, 2.2, 1.3, -0.25, 0, 7); c.fill();
-        c.fillStyle = "#120806"; c.beginPath(); c.ellipse(34.4, 26.4, 0.6, 1.2, 0, 0, 7); c.fill();
-        c.fillStyle = "#ffffff"; c.beginPath(); c.arc(33.6, 25.8, 0.5, 0, 7); c.fill();
+        c.fillStyle = "#f2b630"; c.beginPath(); c.ellipse(0.4, 0, 1.8, 0.85, 0, 0, 7); c.fill();
+        c.fillStyle = "#ffffff"; c.beginPath(); c.arc(-0.2, -0.3, 0.4, 0, 7); c.fill();
       }
-      // Marcas rojas de kitsune en la frente.
-      c.strokeStyle = "#ff3a3a"; c.lineWidth = 1.1;
-      c.beginPath(); c.moveTo(38, 22); c.quadraticCurveTo(42, 18.5, 46, 21); c.stroke();
-      c.beginPath(); c.moveTo(30, 29); c.quadraticCurveTo(34, 31.5, 39, 29.5); c.stroke();
+      c.restore();
       c.restore();
     }
 
@@ -190,7 +185,7 @@
         if (a < 0.08) {
           var h = hash(i, j);
           if (j < groundRow && h > 0.997) put(".", "rgba(220,230,255," + (0.3 + 0.4 * Math.abs(Math.sin(t * 0.7 + h * 60))).toFixed(2) + ")", i * cellW, j * cellH);
-          else if (j >= groundRow && h < 0.35 - (j - groundRow) * 0.02) put(RAMP[2 + (h * 20 | 0)], "#2c3a4a", i * cellW, j * cellH);
+          else if (j >= groundRow && h < 0.35 - (j - groundRow) * 0.02) put(RAMP[2 + (h * 20 | 0)], "#3a2a1a", i * cellW, j * cellH);
           continue;
         }
         var r = data[p] / a, g = data[p + 1] / a, b = data[p + 2] / a;   // sin premultiplicar
@@ -217,7 +212,7 @@
     canvas.addEventListener("pointerdown", function () {
       flare = 1;
       var now = performance.now() / 1000;
-      for (var i = 0; i < 8; i++) hearts.push({ x: ox + (30 + Math.random() * 40) * S, y: oy + 20 * S, t0: now + i * 0.12, ph: Math.random() * 6 });
+      for (var i = 0; i < 8; i++) hearts.push({ x: ox + (20 + Math.random() * 30) * S, y: oy + 5 * S, t0: now + i * 0.12, ph: Math.random() * 6 });
     });
     resize();
     window.__zorro = { frame: frame, scene: scene };
