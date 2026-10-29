@@ -9,158 +9,352 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" />
   <style>
-    :root { --ink: #f6e7ea; --dim: rgba(246, 231, 234, 0.62); }
+    :root { --ink: #f6e7ea; --dim: rgba(246, 231, 234, 0.62); --accent: #ff9ab0; }
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--ink);
       font-family: "Cormorant Garamond", Georgia, serif; }
-    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-    header { position: fixed; top: max(20px, env(safe-area-inset-top)); left: 0; right: 0; text-align: center;
-      padding: 0 16px; pointer-events: none; text-shadow: 0 0 14px #000; animation: text-in 2s ease 2.2s both; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+    header { position: fixed; top: max(18px, env(safe-area-inset-top)); left: 0; right: 0; text-align: center;
+      padding: 0 16px; pointer-events: none; text-shadow: 0 0 14px #000;
+      animation: fade-in 2s ease 2.2s both, settle 2s ease 10s forwards; }
+    @keyframes settle { to { opacity: 0.55; } }   /* el título se atenúa para dejar ver el cielo */
     h1 { margin: 0; font-weight: 400; font-style: italic; font-size: clamp(22px, 3.4vw, 34px); }
-    p { margin: 6px 0 0; font-size: clamp(14px, 1.6vw, 17px); color: var(--dim); letter-spacing: 0.03em; }
-    @keyframes text-in { from { opacity: 0; transform: translateY(-6px); } }
-    @media (prefers-reduced-motion: reduce) { header { animation: none; } }
+    header p { margin: 6px 0 0; font-size: clamp(14px, 1.6vw, 17px); color: var(--dim); letter-spacing: 0.03em; }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(-6px); } }
+
+    .card { position: fixed; left: 0; top: 0; width: min(260px, 70vw); padding: 10px 14px 12px; border-radius: 14px;
+      background: rgba(10, 10, 20, 0.9); border: 1px solid rgba(255, 154, 176, 0.4); box-shadow: 0 10px 30px #000;
+      pointer-events: none; animation: card-in 0.2s ease; }
+    .card[hidden] { display: none; }
+    .card h2 { margin: 0; font-size: 21px; font-weight: 400; font-style: italic; color: var(--accent); }
+    .card .kind { margin: 1px 0 6px; font-size: 13px; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; }
+    .card p { margin: 0; font-size: 16px; line-height: 1.3; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(4px); } }
+
+    .controls { position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+      width: min(560px, calc(100vw - 28px)); display: flex; align-items: center; gap: 12px; padding: 8px 14px;
+      border-radius: 999px; background: rgba(10, 10, 20, 0.7); border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fade-in 1.5s ease 3.5s both; }
+    .controls button { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.08);
+      color: var(--ink); cursor: pointer; display: grid; place-items: center; }
+    .controls button:focus-visible, .controls input:focus-visible { outline: 1px solid var(--accent); }
+    .controls svg { width: 16px; height: 16px; }
+    .controls input { flex: 1; accent-color: var(--accent); }
+    .controls output { flex: none; min-width: 64px; text-align: right; font-size: 19px; font-variant-numeric: tabular-nums; }
+    .hint { position: fixed; left: 0; right: 0; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 58px); text-align: center;
+      font-size: 15px; font-style: italic; color: var(--dim); pointer-events: none; transition: opacity 1s; animation: fade-in 1.5s ease 4s both; }
+    @media (prefers-reduced-motion: reduce) { header, .controls, .hint { animation: none; } }
   </style>
 </head>
 <body>
   <canvas id="sky" role="img"
-    aria-label="Cielo de Pachuca a las 7 de la tarde del 8 de abril de 2026, mirando al oeste: atardecer con Venus brillante y bajo, Júpiter casi en lo alto y Orión hacia el suroeste, dibujado con caracteres"></canvas>
+    aria-label="Cielo de Pachuca la noche del 8 de abril de 2026, desde las 7 de la tarde hasta la salida de la luna, dibujado con caracteres. Se puede girar la vista, cambiar la hora y tocar los astros."></canvas>
   <header>
     <h1>La noche del 8 de abril</h1>
-    <p>Pachuca · 7:10 de la tarde · mirando al oeste</p>
-    <p>La luna aún no salía: llegó pasada la medianoche, a las 00:51</p>
+    <p id="sub">Pachuca · 7:10 de la tarde · mirando al oeste</p>
   </header>
+  <div id="card" class="card" hidden><h2></h2><p class="kind"></p><p class="text"></p></div>
+  <p id="hint" class="hint">Arrastra para mirar alrededor · toca una estrella · mueve la hora</p>
+  <div class="controls">
+    <button id="play" type="button" aria-label="Reproducir la noche" title="Reproducir la noche">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+    </button>
+    <input id="time" type="range" min="0" max="400" step="1" value="20" aria-label="Hora de la noche" />
+    <output id="clock" for="time">19:10</output>
+  </div>
   <script>
-    // Cielo real de Pachuca (20.10° N, 98.76° O) el 8 de abril de 2026 a las 19:10, hora local.
-    // Posiciones calculadas con ephem: el sol estaba 4.7° bajo el horizonte (azimut 280°),
-    // en pleno crepúsculo; Venus brillaba bajo en el oeste y Júpiter casi en el cenit.
-    // [nombre, altura°, azimut°, magnitud]
-    var BODIES = [["Venus", 17.22, 280.32, -3.82], ["Jupiter", 81.9, 290.96, -2.02], ["Sirius", 50.51, 202.09, -1.44], ["Procyon", 75.03, 183.37, 0.4], ["Capella", 50.57, 319.58, 0.08], ["Betelgeuse", 61.03, 247.83, 0.45], ["Rigel", 43.85, 235.86, 0.18], ["Aldebaran", 45.69, 273.42, 0.87], ["Pollux", 82.12, 4.44, 1.16], ["Castor", 78.14, 351.81, 1.58], ["Bellatrix", 53.92, 252.46, 1.64], ["Alnilam", 52.39, 239.27, 1.69], ["Alnitak", 52.85, 237.17, 1.74], ["Mintaka", 52.06, 241.47, 2.25], ["Saiph", 48.92, 226.25, 2.07], ["Elnath", 57.96, 292.15, 1.65], ["Menkalinan", 57.34, 325.38, 1.9], ["Mirzam", 47.15, 208.69, 1.98], ["Alhena", 74.15, 259.07, 1.93], ["Adhara", 39.75, 192.68, 1.5], ["Canopus", 15.21, 192.34, -0.62], ["Wezen", 42.72, 190.59, 1.83], ["Alcyone", 35.81, 285.9, 2.85], ["Hamal", 13.32, 290.58, 2.01], ["Mirfak", 31.58, 317.05, 1.79], ["Algol", 29.0, 306.64, 2.09]];
-    var LABELS = { Venus: "Venus", Jupiter: "Júpiter", Sirius: "Sirio", Betelgeuse: "Orión" };
-    var SUN_AZ = 280.0;
-    var VIEW_AZ = 268;
+    // Cielo real de Pachuca (20.10° N, 98.76° O) el 8–9 de abril de 2026, de 18:50 a 01:30.
+    // cielo.json: 58 estrellas brillantes (RA/Dec) y, cada 10 minutos, la posición del sol,
+    // Venus, Júpiter y la luna (con su fase y la orientación de su lado iluminado),
+    // calculadas con ephem. La salida de la luna (00:51) está contrastada con el USNO.
+    var LAT = 20.1011 * Math.PI / 180;
     var RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+    var MARIA = [[-0.32, 0.42, 0.26], [0.17, 0.42, 0.16], [0.3, 0.14, 0.19], [0.66, 0.3, 0.12], [0.55, -0.12, 0.15],
+      [0.36, -0.28, 0.11], [-0.2, -0.36, 0.16], [-0.62, 0.08, 0.34], [-0.46, -0.42, 0.1], [0.0, 0.72, 0.09], [-0.12, 0.1, 0.12]];
+    var NAMES = { Sirius: "Sirio", Canopus: "Canopo", Arcturus: "Arturo", Procyon: "Proción", Aldebaran: "Aldebarán",
+      Spica: "Espiga", Pollux: "Pólux", Castor: "Cástor", Regulus: "Régulo", Polaris: "Estrella Polar", Rigil: "Alfa Centauri",
+      "Rigil Kentaurus": "Alfa Centauri", Achernar: "Achernar", Denebola: "Denébola" };
+    var INFO = {
+      Moon: ["Luna", "nuestro satélite", "Menguante gibosa, 59 % iluminada. Esa noche salió a las 00:51 por el este-sureste."],
+      Venus: ["Venus", "planeta", "El «lucero de la tarde». Lo más brillante del cielo después de la luna; esa tarde brillaba bajo en el oeste."],
+      Jupiter: ["Júpiter", "planeta", "El planeta más grande. A las 7 de la tarde estaba casi justo encima de ustedes."],
+      Sirius: ["Sirio", "estrella", "La estrella más brillante del cielo nocturno, a 8.6 años luz."],
+      Betelgeuse: ["Betelgeuse", "estrella · Orión", "Una supergigante roja: el hombro de Orión."],
+      Rigel: ["Rigel", "estrella · Orión", "Supergigante azul: el pie de Orión."],
+      Alnilam: ["El cinturón de Orión", "Alnitak, Alnilam y Mintaka", "Las «Tres Marías», tres estrellas en fila."],
+      Alnitak: ["El cinturón de Orión", "Alnitak, Alnilam y Mintaka", "Las «Tres Marías», tres estrellas en fila."],
+      Mintaka: ["El cinturón de Orión", "Alnitak, Alnilam y Mintaka", "Las «Tres Marías», tres estrellas en fila."],
+      Aldebaran: ["Aldebarán", "estrella · Tauro", "El ojo rojizo del Toro."],
+      Capella: ["Capella", "estrella · Auriga", "Una pareja de estrellas amarillas que brillan como una sola."],
+      Procyon: ["Proción", "estrella · Can Menor", "La que «precede al perro»: sale justo antes que Sirio."],
+      Polaris: ["Estrella Polar", "estrella", "Marca el norte; desde Pachuca está a solo 20° sobre el horizonte."],
+      Arcturus: ["Arturo", "estrella", "La estrella más brillante del hemisferio norte."],
+      Canopus: ["Canopo", "estrella", "La segunda más brillante del cielo; desde Pachuca se ve baja hacia el sur."],
+      Alcyone: ["Las Pléyades", "cúmulo de estrellas", "Las «Siete Hermanas», un grupito de estrellas jóvenes."],
+      Dubhe: ["Osa Mayor", "constelación", "El Gran Cucharón, bajo hacia el norte."],
+      Regulus: ["Régulo", "estrella · Leo", "El corazón del León."],
+      Castor: ["Cástor", "estrella · Géminis", "Uno de los gemelos."],
+      Pollux: ["Pólux", "estrella · Géminis", "El otro gemelo."]
+    };
+    var LINES = [["Betelgeuse", "Bellatrix"], ["Bellatrix", "Mintaka"], ["Betelgeuse", "Alnitak"], ["Mintaka", "Alnilam"],
+      ["Alnilam", "Alnitak"], ["Mintaka", "Rigel"], ["Alnitak", "Saiph"], ["Dubhe", "Merak"], ["Merak", "Phecda"],
+      ["Phecda", "Megrez"], ["Megrez", "Dubhe"], ["Megrez", "Alioth"], ["Alioth", "Mizar"], ["Mizar", "Alkaid"],
+      ["Castor", "Pollux"]];
+    var COMPASS = [["N", 0], ["NE", 45], ["E", 90], ["SE", 135], ["S", 180], ["SO", 225], ["O", 270], ["NO", 315]];
+    var DIRS = ["norte", "noreste", "este", "sureste", "sur", "suroeste", "oeste", "noroeste"];
 
-    var canvas = document.getElementById("sky");
-    var ctx = canvas.getContext("2d");
+    var canvas = document.getElementById("sky"), ctx = canvas.getContext("2d");
+    var card = document.getElementById("card"), slider = document.getElementById("time");
+    var clockEl = document.getElementById("clock"), subEl = document.getElementById("sub"), hint = document.getElementById("hint");
+    var playBtn = document.getElementById("play"), playIcon = document.getElementById("playIcon");
+    var data, W, H, cellW, cellH, cols, rows;
+    var view = { az: 268, alt: 30 }, minute = 20, entry = 0, objects = [], playing = false, dirty = true;
     var ease = function (x) { return 1 - Math.pow(1 - x, 3); };
     function hash(x, y) { var h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return h - Math.floor(h); }
 
-    // p (0..1): progreso de la entrada. El crepúsculo se oscurece un poco y las estrellas
-    // aparecen por orden de brillo, como esa tarde: primero Venus, luego Júpiter y Sirio...
-    function draw(p) {
-      var e = ease(p);
+    function sample(min) {
+      var T = data.table, i = Math.max(0, Math.min(T.length - 2, Math.floor(min / 10))), f = (min - i * 10) / 10;
+      var a = T[i], b = T[i + 1];
+      var lerp = function (x, y) { return x + (y - x) * f; };
+      var lerpAz = function (x, y) { var d = ((y - x + 540) % 360) - 180; return (x + d * f + 360) % 360; };
+      var lerpPair = function (k) { return [lerp(a[k][0], b[k][0]), lerpAz(a[k][1], b[k][1])]; };
+      var dl = ((b.limb - a.limb + 540) % 360) - 180;
+      var dlst = b.lst - a.lst; if (dlst < 0) dlst += 24;
+      return { lst: a.lst + dlst * f, sun: lerpPair("sun"), venus: lerpPair("venus"), jupiter: lerpPair("jupiter"),
+        moon: lerpPair("moon"), illum: lerp(a.illum, b.illum) / 100, limb: a.limb + dl * f };
+    }
+
+    function starAltAz(ra, dec, lst) {
+      var d = dec * Math.PI / 180, h = (lst - ra) * 15 * Math.PI / 180;
+      var alt = Math.asin(Math.sin(LAT) * Math.sin(d) + Math.cos(LAT) * Math.cos(d) * Math.cos(h));
+      var az = Math.atan2(-Math.sin(h) * Math.cos(d), Math.cos(LAT) * Math.sin(d) - Math.sin(LAT) * Math.cos(d) * Math.cos(h));
+      return [alt * 180 / Math.PI, (az * 180 / Math.PI + 360) % 360];
+    }
+
+    function fov() { return Math.max(80, Math.min(160, (W / H) * 105)); }
+    function project(alt, az) {
+      var f = fov(), fv = f * H / W;
+      var d = ((az - view.az + 540) % 360) - 180;
+      return [W / 2 + d / f * W, H * 0.55 - (alt - view.alt) / fv * H];
+    }
+
+    function resize() {
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var W = window.innerWidth, H = window.innerHeight;
-      if (canvas.width !== Math.round(W * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+      W = window.innerWidth; H = window.innerHeight;
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, W, H);
+      cellH = Math.max(4, Math.min(7, Math.min(W, H) / 170)); cellW = cellH * 0.62;
+      cols = Math.ceil(W / cellW); rows = Math.ceil(H / cellH);
+      dirty = true;
+    }
 
-      var cellH = Math.max(4, Math.min(7, Math.min(W, H) / 170));
-      var cellW = cellH * 0.62;
-      var cols = Math.ceil(W / cellW), rows = Math.ceil(H / cellH);
-      var fovH = Math.max(90, Math.min(170, (W / H) * 110));
-      var horizon = H * 0.84, top = H * 0.24;   // el cenit queda bajo el título
-      function project(alt, az) {
-        var d = ((az - VIEW_AZ + 540) % 360) - 180;
-        return [W / 2 + d / fovH * W, horizon - alt / 88 * (horizon - top)];
-      }
-      var sunX = project(0, SUN_AZ)[0];
+    function fmt(min) {
+      var t = (18 * 60 + 50 + Math.round(min)) % 1440, h = t / 60 | 0, m = t % 60;
+      return (h % 12 === 0 ? 12 : h % 12) + ":" + String(m).padStart(2, "0") + (h >= 12 ? " p. m." : " a. m.");
+    }
+    function clock24(min) {
+      var t = (18 * 60 + 50 + Math.round(min)) % 1440;
+      return String(t / 60 | 0).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
+    }
 
-      ctx.font = "700 " + cellH + "px 'Courier New', monospace";
-      ctx.textBaseline = "top";
-      var groups = {};
+    function draw() {
+      var s = sample(minute), e = ease(entry);
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+      ctx.font = "700 " + cellH + "px 'Courier New', monospace"; ctx.textBaseline = "top";
+      var groups = {}, labels = []; objects = [];
       function put(x, y, col, lum) {
         if (x < 0 || y < 0 || x >= cols || y >= rows) return;
-        var n = RAMP.length - 1;
-        var ch = RAMP[Math.min(n, Math.max(1, Math.round(lum * n * 1.1)))];
+        var n = RAMP.length - 1, ch = RAMP[Math.min(n, Math.max(1, Math.round(lum * n * 1.1)))];
         var q = (Math.min(255, col[0]) >> 3) << 10 | (Math.min(255, col[1]) >> 3) << 5 | (Math.min(255, col[2]) >> 3);
         (groups[q] = groups[q] || []).push(x, y, ch);
       }
+      function flush() {
+        for (var key in groups) {
+          var qq = +key, list = groups[key];
+          ctx.fillStyle = "rgb(" + ((qq >> 10 & 31) * 8.2 | 0) + "," + ((qq >> 5 & 31) * 8.2 | 0) + "," + ((qq & 31) * 8.2 | 0) + ")";
+          for (var z = 0; z < list.length; z += 3) ctx.fillText(list[z + 2], list[z] * cellW, list[z + 1] * cellH);
+        }
+        groups = {};
+      }
+      var horizonY = project(0, view.az)[1];
 
-      // Cielo del crepúsculo en caracteres: naranja sobre el horizonte del oeste, azul arriba.
-      var dusk = 1 - 0.35 * e;
-      for (var y = 0; y < rows; y++) {
-        var py = (y + 0.5) * cellH;
-        if (py > horizon + H * 0.03) break;
-        var h = Math.max(0, (horizon - py) / (horizon - top));
-        for (var x = 0; x < cols; x++) {
-          var px = (x + 0.5) * cellW;
-          var dsun = Math.abs(px - sunX) / W;
-          var glow = 1.35 * Math.exp(-h * 3.6) * Math.exp(-dsun * dsun * 5) * dusk;
-          var blue = 0.32 * (1 - h * 0.7) * dusk;
-          var v = glow * 0.9 + blue * 0.35;
-          if (v < 0.05 || hash(x, y) > v * 1.6) continue;
-          var col = [40 + 215 * glow + 20 * blue | 0, 30 + 110 * glow + 60 * blue | 0, 70 + 30 * glow + 150 * blue | 0];
-          put(x, y, col, Math.min(0.5, v * 0.6));
+      // Crepúsculo: resplandor hacia donde está el sol y azul que se apaga con la noche.
+      var sunAlt = s.sun[0];
+      var dusk = Math.max(0, Math.min(1, (sunAlt + 16) / 14)) * (1 - 0.3 * e);
+      if (dusk > 0.01) {
+        var sunX = project(0, s.sun[1])[0];
+        for (var y = 0; y < rows; y++) {
+          var py = (y + 0.5) * cellH; if (py > horizonY + 10) break;
+          var h = Math.max(0, (horizonY - py) / (H * 0.7));
+          for (var x = 0; x < cols; x++) {
+            var px = (x + 0.5) * cellW, dsun = (px - sunX) / W;
+            var glow = 1.35 * Math.exp(-h * 3.6) * Math.exp(-dsun * dsun * 5) * dusk, blue = 0.32 * (1 - h * 0.7) * dusk;
+            var v = glow * 0.9 + blue * 0.35;
+            if (v < 0.05 || hash(x, y) > v * 1.6) continue;
+            put(x, y, [40 + 215 * glow + 20 * blue | 0, 30 + 110 * glow + 60 * blue | 0, 70 + 30 * glow + 150 * blue | 0], Math.min(0.5, v * 0.6));
+          }
         }
       }
 
-      // Estrellas y planetas, por orden de brillo durante la entrada.
-      var labels = [];
-      for (var i = 0; i < BODIES.length; i++) {
-        var b = BODIES[i];
-        var appear = (b[3] + 4) / 7.5;                       // Venus ≈ 0, estrellas débiles ≈ 0.9
-        var a = Math.max(0, Math.min(1, (p * 1.25 - appear) / 0.2));
-        if (a <= 0) continue;
-        var pt = project(b[1], b[2]);
-        if (pt[0] < -20 || pt[0] > W + 20) continue;
-        var cx = Math.floor(pt[0] / cellW), cy = Math.floor(pt[1] / cellH);
-        var bright = Math.max(0.25, Math.min(1, (3 - b[3]) / 6.8)) * a;
-        var planet = b[0] === "Venus" || b[0] === "Jupiter";
-        var col = b[0] === "Venus" ? [255, 246, 214] : b[0] === "Jupiter" ? [255, 236, 200]
-          : b[0] === "Betelgeuse" || b[0] === "Aldebaran" ? [255, 200, 160] : [220, 230, 255];
-        var rad = planet ? (b[0] === "Venus" ? 4 : 3) : bright > 0.7 ? 2 : 1;
+      // El cielo va al fondo: las estrellas y los planetas se dibujan encima.
+      ctx.globalAlpha = 0.85; flush(); ctx.globalAlpha = 1;
+
+      // Estrellas (aparecen al oscurecer y por brillo durante la entrada) y líneas de Orión y la Osa Mayor.
+      var starVis = Math.max(0, Math.min(1, (-sunAlt - 2) / 10));
+      var pos = {};
+      for (var i = 0; i < data.stars.length; i++) {
+        var st = data.stars[i], aa = starAltAz(st[1], st[2], s.lst);
+        var p = project(aa[0], aa[1]); pos[st[0]] = { p: p, alt: aa[0] };
+        if (aa[0] < 0) continue;
+        var appear = (st[3] + 4) / 7.5, a = Math.max(0, Math.min(1, (entry * 1.25 - appear) / 0.2));
+        var vis = Math.max(0, Math.min(1, starVis * 1.3 - (st[3] - 0.5) * 0.25)) * a;
+        if (vis <= 0.02) continue;
+        drawPoint(p, st[3], st[0] === "Betelgeuse" || st[0] === "Aldebaran" || st[0] === "Antares" ? [255, 200, 160] : [220, 230, 255], vis, false);
+        objects.push({ key: st[0], p: p, r: 16 });
+      }
+      for (var k = 0; k < LINES.length; k++) {
+        var A = pos[LINES[k][0]], B = pos[LINES[k][1]];
+        if (!A || !B || A.alt < 0 || B.alt < 0 || Math.abs(A.p[0] - B.p[0]) > W * 0.5) continue;
+        var steps = Math.hypot(B.p[0] - A.p[0], B.p[1] - A.p[1]) / (cellW * 3);
+        for (var j = 1; j < steps - 1; j++) {
+          var t = j / steps;
+          put(Math.floor((A.p[0] + (B.p[0] - A.p[0]) * t) / cellW), Math.floor((A.p[1] + (B.p[1] - A.p[1]) * t) / cellH), [90, 110, 150], 0.06 * starVis * e + 0.02);
+        }
+      }
+
+      // Planetas.
+      [["Venus", s.venus, -3.8, [255, 246, 214]], ["Jupiter", s.jupiter, -2.0, [255, 236, 200]]].forEach(function (pl) {
+        if (pl[1][0] < 0) return;
+        var appear = Math.max(0, Math.min(1, entry * 4 - (pl[0] === "Venus" ? 0 : 0.4)));
+        var p = project(pl[1][0], pl[1][1]);
+        drawPoint(p, pl[2], pl[3], appear, true);
+        objects.push({ key: pl[0], p: p, r: 26 });
+        if (appear > 0.5) labels.push([pl[0] === "Venus" ? "Venus" : "Júpiter", p[0], p[1] + 9 * cellH]);
+      });
+
+      // Luna, con su fase y la orientación real de su lado iluminado.
+      if (s.moon[0] > -2) {
+        var mp = project(s.moon[0], s.moon[1]), R = Math.min(W, H) * 0.06;
+        var ph = Math.acos(2 * s.illum - 1), lb = s.limb * Math.PI / 180;
+        var sx = Math.sin(ph) * Math.cos(lb), sy = Math.sin(ph) * Math.sin(lb), sz = Math.cos(ph);
+        var warm = Math.max(0, Math.min(1, 1 - s.moon[0] / 15));
+        for (var yy = Math.floor((mp[1] - R) / cellH); yy <= (mp[1] + R) / cellH; yy++) {
+          for (var xx = Math.floor((mp[0] - R) / cellW); xx <= (mp[0] + R) / cellW; xx++) {
+            var dx = ((xx + 0.5) * cellW - mp[0]) / R, dy = -((yy + 0.5) * cellH - mp[1]) / R, rr = dx * dx + dy * dy;
+            if (rr > 1) continue;
+            var dz = Math.sqrt(1 - rr), lit = Math.max(0, Math.min(1, (dx * sx + dy * sy + dz * sz) * 4 + 0.5));
+            var al = 1;
+            for (var q = 0; q < MARIA.length; q++) { var m = MARIA[q], ex = dx - m[0], ey = dy - m[1]; al -= 0.5 * Math.exp(-(ex * ex + ey * ey) / (m[2] * m[2])); }
+            var v2 = Math.max(lit * Math.max(0.35, al) * (0.75 + 0.25 * dz), 0.06 * (1 - lit));
+            if (v2 < 0.03) continue;
+            put(xx, yy, [60 + 215 * v2 | 0, 60 + (205 - 60 * warm) * v2 | 0, 72 + (180 - 110 * warm) * v2 | 0], v2);
+          }
+        }
+        objects.push({ key: "Moon", p: mp, r: R + 6 });
+        labels.push(["Luna", mp[0], mp[1] + R + 4 * cellH]);
+      }
+
+      function drawPoint(p, mag, col, a, planet) {
+        var cx = Math.floor(p[0] / cellW), cy = Math.floor(p[1] / cellH);
+        var bright = Math.max(0.25, Math.min(1, (3 - mag) / 6.8)) * a;
+        var rad = planet ? (mag < -3 ? 8 : 6) : bright > 0.7 ? 3 : bright > 0.45 ? 2 : 1;
         for (var dy = -rad; dy <= rad; dy++) for (var dx = -rad * 2; dx <= rad * 2; dx++) {
-          var d = Math.hypot(dx / 2, dy) / rad;
-          if (d > 1) continue;
-          var cross = (dx === 0 || dy === 0) ? 1 : 0.45;
-          var l = bright * Math.pow(1 - d, 1.6) * cross;
+          var d = Math.hypot(dx / 2, dy) / rad; if (d > 1) continue;
+          var l = bright * Math.pow(1 - d, 1.6) * (dx === 0 || dy === 0 ? 1 : 0.45);
           if (l > 0.05) put(cx + dx, cy + dy, [col[0] * (0.5 + l) | 0, col[1] * (0.5 + l) | 0, col[2] * (0.5 + l) | 0], l);
         }
-        if (LABELS[b[0]] && a > 0.6) labels.push([LABELS[b[0]], pt[0], pt[1] + (rad + 2) * cellH, (a - 0.6) / 0.4]);
       }
 
-      // Cerros de Pachuca y luces de la ciudad.
-      for (var yy = 0; yy < rows; yy++) {
-        var py2 = (yy + 0.5) * cellH;
-        for (var xx = 0; xx < cols; xx++) {
-          var px2 = (xx + 0.5) * cellW;
-          var hill = H * (0.86 - 0.05 * Math.sin(px2 / W * 5.2 + 0.7) - 0.03 * Math.sin(px2 / W * 13 + 2));
-          if (py2 <= hill) continue;
-          var r = hash(xx, yy);
-          if (r < 0.012 * e && py2 > hill + 8) put(xx, yy, [255, 190, 110], 0.45);   // casas encendidas
-          else if (r < 0.5) put(xx, yy, [16, 28, 40], 0.2);
+      // Cerros de alrededor de Pachuca (siguen al horizonte al girar) y casas encendidas.
+      var lights = Math.max(0, Math.min(1, (-sunAlt + 1) / 8)) * e;
+      for (var y3 = Math.max(0, Math.floor((horizonY - H * 0.08) / cellH)); y3 < rows; y3++) {
+        var py3 = (y3 + 0.5) * cellH;
+        for (var x3 = 0; x3 < cols; x3++) {
+          var px3 = (x3 + 0.5) * cellW;
+          var az3 = view.az + (px3 - W / 2) / W * fov();
+          var hill = horizonY - H * (0.02 + 0.035 * (Math.sin(az3 * 0.09) + 1) + 0.02 * Math.sin(az3 * 0.31 + 2));
+          if (py3 <= hill) continue;
+          var gx = Math.round(az3 * 4), r = hash(gx, y3);
+          if (r < 0.014 * lights && py3 > hill + 6) put(x3, y3, [255, 190, 110], 0.45);
+          else if (r < 0.5) put(x3, y3, [16, 28, 40], 0.2);
         }
       }
 
-      for (var key in groups) {
-        var q = +key, list = groups[key];
-        ctx.fillStyle = "rgb(" + ((q >> 10 & 31) * 8.2 | 0) + "," + ((q >> 5 & 31) * 8.2 | 0) + "," + ((q & 31) * 8.2 | 0) + ")";
-        for (var j = 0; j < list.length; j += 3) ctx.fillText(list[j + 2], list[j] * cellW, list[j + 1] * cellH);
-      }
+      flush();
 
-      ctx.font = "italic " + Math.max(13, Math.min(18, W / 60)) + "px 'Cormorant Garamond', Georgia, serif";
-      ctx.textAlign = "center";
-      for (var k = 0; k < labels.length; k++) {
-        ctx.fillStyle = "rgba(246,231,234," + 0.75 * labels[k][3] + ")";
-        ctx.fillText(labels[k][0], labels[k][1], labels[k][2]);
-      }
+      // Puntos cardinales sobre el horizonte.
+      ctx.font = "italic 15px 'Cormorant Garamond', Georgia, serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(246,231,234," + 0.8 * e + ")";
+      labels.forEach(function (l) { ctx.fillText(l[0], l[1], l[2]); });
+      ctx.fillStyle = "rgba(246,231,234," + 0.55 * e + ")";
+      COMPASS.forEach(function (c) { var p = project(0, c[1]); if (p[0] > 10 && p[0] < W - 10) ctx.fillText(c[0], p[0], Math.min(H - 80, horizonY + 18)); });
       ctx.textAlign = "start";
+
+      var dir = DIRS[Math.round(((view.az % 360) + 360) % 360 / 45) % 8];
+      subEl.textContent = "Pachuca · " + fmt(minute) + " · mirando al " + dir;
+      clockEl.textContent = clock24(minute);
     }
 
-    var ENTRY = 4.5;
-    var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var t0 = performance.now();
-    function tick(now) {
-      var p = Math.min(1, (now - t0) / 1000 / ENTRY);
-      draw(p);
-      if (p < 1) requestAnimationFrame(tick);
+    function loop() {
+      if (playing) {
+        minute += 0.6;
+        if (minute >= 400) { minute = 400; setPlaying(false); }
+        slider.value = minute; dirty = true;
+      }
+      if (entry < 1) { entry = Math.min(1, entry + 1 / (60 * 4.5)); dirty = true; }
+      if (dirty) { draw(); dirty = false; }
+      requestAnimationFrame(loop);
     }
-    if (reduced) draw(1); else requestAnimationFrame(tick);
-    var t;
-    window.addEventListener("resize", function () { clearTimeout(t); t = setTimeout(function () { draw(1); }, 200); });
-    window.__cielo = { draw: draw };
+
+    function setPlaying(on) {
+      playing = on;
+      playIcon.setAttribute("d", on ? "M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" : "M8 5.5v13l10.5-6.5z");
+      playBtn.setAttribute("aria-label", on ? "Pausar" : "Reproducir la noche");
+      if (on && minute >= 400) minute = 0;
+      // Al reproducir, mirar hacia el este-sureste para ver salir la luna.
+      if (on && minute > 300) view.az = 120;
+    }
+
+    // Interacción: arrastrar para mirar, tocar para ver qué es.
+    var drag = null;
+    canvas.addEventListener("pointerdown", function (ev) { drag = { x: ev.clientX, y: ev.clientY, az: view.az, alt: view.alt, moved: false }; canvas.setPointerCapture(ev.pointerId); });
+    canvas.addEventListener("pointermove", function (ev) {
+      if (drag) {
+        var dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+        if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+        view.az = ((drag.az - dx / W * fov()) % 360 + 360) % 360;
+        view.alt = Math.max(15, Math.min(70, drag.alt + dy / H * fov() * H / W));
+        hint.style.opacity = 0; card.hidden = true; dirty = true;
+      } else if (ev.pointerType === "mouse") showInfo(ev.clientX, ev.clientY);
+    });
+    canvas.addEventListener("pointerup", function (ev) { if (drag && !drag.moved) showInfo(ev.clientX, ev.clientY); drag = null; });
+    canvas.addEventListener("pointerleave", function (ev) { if (ev.pointerType === "mouse" && !drag) card.hidden = true; });
+
+    function showInfo(x, y) {
+      var best = null, bd = Infinity;
+      objects.forEach(function (o) { var d = Math.hypot(o.p[0] - x, o.p[1] - y); if (d < o.r && d < bd) { bd = d; best = o; } });
+      if (!best) { card.hidden = true; canvas.style.cursor = ""; return; }
+      var info = INFO[best.key] || [NAMES[best.key] || best.key, "estrella", "Una de las estrellas que brillaban esa noche."];
+      card.querySelector("h2").textContent = info[0];
+      card.querySelector(".kind").textContent = info[1];
+      card.querySelector(".text").textContent = info[2];
+      card.hidden = false;
+      var cw = card.offsetWidth, ch = card.offsetHeight;
+      card.style.transform = "translate(" + Math.max(10, Math.min(W - cw - 10, x + 14)) + "px," + Math.max(10, Math.min(H - ch - 80, y - ch - 14 < 10 ? y + 14 : y - ch - 14)) + "px)";
+      canvas.style.cursor = "pointer";
+      hint.style.opacity = 0;
+    }
+
+    slider.addEventListener("input", function () { minute = +slider.value; setPlaying(false); dirty = true; card.hidden = true; });
+    playBtn.addEventListener("click", function () { setPlaying(!playing); });
+    window.addEventListener("resize", resize);
+
+    fetch("cielo.json").then(function (r) { return r.json(); }).then(function (d) {
+      data = d; resize();
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) entry = 1;
+      requestAnimationFrame(loop);
+      window.__cielo = { view: view, set: function (m, az) { minute = m; slider.value = m; if (az !== undefined) view.az = az; entry = 1; draw(); return objects.map(function (o) { return o.key + "@" + Math.round(o.p[0]) + "," + Math.round(o.p[1]); }).join(" "); } };
+    });
   </script>
 </body>
 </html>
