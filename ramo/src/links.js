@@ -5,5 +5,6 @@
 export const LINKS = {
   1: { url: "../", title: "Te amo en todos los idiomas", preview: "assets/previews/corazon.jpg" },
   2: { url: "../espiral/", title: "Spiral Art", preview: "assets/previews/espiral.jpg" },
-  3: { url: "../luna/", title: "La noche del 8 de abril", preview: "assets/previews/luna.jpg" }
+  3: { url: "../luna/", title: "La noche del 8 de abril", preview: "assets/previews/luna.jpg" },
+  4: { url: "../zorro/", title: "Mirándote y pensando en ti", preview: "assets/previews/zorro.jpg" }
 };

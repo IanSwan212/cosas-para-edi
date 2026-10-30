@@ -2,7 +2,7 @@
 // en pantalla en lugar de dejar la página en negro.
 const probe = document.createElement("canvas");
 if (probe.getContext("webgl2") || probe.getContext("webgl")) {
-  await import("./main.js?v=mvt7cftc");
+  await import("./main.js?v=mvue8paf");
 } else {
   const p = document.getElementById("progress");
   p.dataset.fixed = "1";
