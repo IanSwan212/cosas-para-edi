@@ -95,7 +95,9 @@
       if (t0 == null) t0 = t;
       var intro = window.__zorro && window.__zorro.intro != null ? window.__zorro.intro : Math.min(1, (t - t0) / 5);
       // Entrada sin salto: aparece suave, mira al cielo y luego voltea hacia el frente.
-      var turn = smooth(0.6, 0.68, intro), turnRot = smooth(0.35, 0.62, intro);
+      // Giro natural: baja la mirada del cielo, el perfil se "cierra" como si girara en 3D
+      // y la cara de frente se abre en su lugar, con un pequeño asentamiento al final.
+      var turn = smooth(0.56, 0.63, intro), turnRot = smooth(0.32, 0.6, intro), close = smooth(0.5, 0.62, intro);
       var airborne = 0, vel = 0;
       // Emoción (al tocarlo o acariciarlo varias veces): saltitos, meneo, cola a toda velocidad.
       var ex = smooth(0.25, 0.7, excite), hop = Math.abs(Math.sin(t * 9)) * ex;
@@ -153,7 +155,8 @@
       }
       // Cabeza mirando hacia arriba, ojos cerrados y contentos; se mece despacio.
       var tilt = Math.sin(t * 0.5) * 0.05 - flare * 0.08;
-      c.save(); c.globalAlpha *= 1 - turn; c.translate(48, 40); c.rotate(tilt + turnRot * 0.75); c.translate(-48, -40);
+      c.save(); c.globalAlpha *= 1 - turn; c.translate(48, 40); c.rotate(tilt + turnRot * 0.42); c.translate(-48, -40);
+      c.translate(50, 26); c.scale(1 - close * 0.55, 1); c.translate(-50, -26);
       var gh = c.createLinearGradient(40, 12, 62, 40);
       gh.addColorStop(0, "#fbb04c"); gh.addColorStop(1, "#e47c1e");
       path(c, [46, 9,
@@ -180,7 +183,7 @@
       path(c, [-3, 0, 0, 1, 4, 6, 6, 11, 2, 10, -1, 7, -3, 4, -4, 2, -4, 1, -3, 0]); c.fill();
       c.restore();
       c.restore();
-      if (turn > 0) frontHead(c, t, turn, smooth(0.6, 0.85, intro));
+      if (turn > 0) frontHead(c, t, turn, smooth(0.56, 0.8, intro));
       c.restore();
       c = stage; bend(c, pose);
       // Corazoncitos que suben del zorro (también se vuelven ASCII).
@@ -221,8 +224,9 @@
     // Cara de frente, como la foto: mejillas esponjosas, hocico blanco, ojos ámbar y sonrisa.
     function frontHead(c, t, turn, fin) {
       var cx = 51 + look.x * 2.5, cy = 30 + look.y * 1.5;
-      var tilt = Math.sin(t * 0.7) * 0.05 + (1 - fin) * -0.35 + look.x * 0.12 + pet * 0.2;
-      c.save(); c.globalAlpha *= turn; c.translate(cx, cy + (1 - fin) * -4); c.rotate(tilt);
+      var settle = Math.sin(fin * Math.PI * 1.5) * (1 - fin) * 0.12;      // pequeño vaivén al acomodarse
+      var tilt = Math.sin(t * 0.7) * 0.05 + (1 - fin) * 0.18 + settle + look.x * 0.12 + pet * 0.2;
+      c.save(); c.globalAlpha *= turn; c.translate(cx - (1 - fin) * 2, cy + (1 - fin) * -3); c.rotate(tilt); c.scale(0.45 + 0.55 * fin, 1);
       // Orejas con punta negra e interior claro.
       for (var s = -1; s <= 1; s += 2) {
         var tw = s === 1 ? Math.max(0, Math.sin(t * 0.7) - 0.93) * 0.6 : 0;
