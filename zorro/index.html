@@ -37,7 +37,7 @@
     // luego cada píxel se convierte en un carácter según su brillo y con su color.
     // Respira, mece la cabeza, mueve la punta de la cola y la oreja; el pasto se mece y flotan luciérnagas.
     // Al tocarlo, levanta un poco más la cabeza, sacude la cola y suben corazones.
-    var RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+    var RAMP = " .'`,:;\"^~-_+=<>il!/\|()1{}[]?tfjrxnuvczXYUJCLQ0Ozmwqpdbkhao*#";
     var canvas = document.getElementById("art"), ctx = canvas.getContext("2d");
     var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -51,7 +51,7 @@
       W = window.innerWidth; H = window.innerHeight;
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      cellH = Math.max(4.5, Math.min(7, Math.min(W, H) / 150)); cellW = cellH * 0.62;
+      cellH = Math.max(3.6, Math.min(5.5, Math.min(W, H) / 190)); cellW = cellH * 0.62;
       cols = Math.ceil(W / cellW); rows = Math.ceil(H / cellH);
       off.width = cols; off.height = rows;
       // Escena en unidades: el zorro ocupa x 15..95, y 8..114 (y hacia abajo).
@@ -220,7 +220,7 @@
       scene(oc, t);
       var data = oc.getImageData(0, 0, cols, rows).data;
       ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
-      ctx.font = "700 " + cellH + "px 'Courier New', monospace"; ctx.textBaseline = "top";
+      ctx.font = "500 " + cellH + "px 'Courier New', monospace"; ctx.textBaseline = "top";
       var groups = {};
       function put(ch, c, x, y) { (groups[c] || (groups[c] = [])).push(ch, x, y); }
       var groundRow = Math.floor((oy + 114.5 * S) / cellH);
