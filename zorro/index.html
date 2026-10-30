@@ -29,7 +29,7 @@
     <h1>Un zorro para ti</h1>
     <p>Mirándote, pensando en ti</p>
   </header>
-  <p class="hint">Tócalo</p>
+  <p class="hint">Acarícialo · toca su cola · toca el cielo</p>
   <script>
     // Zorro rojo suave y esponjoso, sentado de espaldas en el pasto y mirando hacia arriba con los ojos
     // cerrados, con la cola enroscada por delante; en ASCII de colores como el ramo y la luna.
@@ -42,6 +42,7 @@
     var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var W, H, cellW, cellH, cols, rows, S, ox, oy, flare = 0, hearts = [], t0 = null;
+    var look = { x: 0, y: 0 }, lookT = { x: 0, y: 0 }, pet = 0, petting = false, rub = 0, toy = null;
 
     function hash(x, y) { var h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return h - Math.floor(h); }
 
@@ -80,6 +81,13 @@
         var g = c.createRadialGradient(fx, fy, 0, fx, fy, fr * 2.6);
         g.addColorStop(0, "rgba(255,240,190,1)"); g.addColorStop(0.4, "rgba(255,190,90,0.7)"); g.addColorStop(1, "rgba(255,150,60,0)");
         c.fillStyle = g; c.beginPath(); c.arc(fx, fy, fr * 2.6, 0, 7); c.fill();
+      }
+      // Luciérnaga que dejó Edi al tocar el cielo: el zorro la mira.
+      if (toy) {
+        var ta = t - toy.t0, tf = Math.max(0, 1 - ta / 4), tyy = toy.y - ta * 2;
+        var tg = c.createRadialGradient(toy.x, tyy, 0, toy.x, tyy, 5);
+        tg.addColorStop(0, "rgba(255,245,200," + tf + ")"); tg.addColorStop(0.4, "rgba(255,200,90," + (0.8 * tf) + ")"); tg.addColorStop(1, "rgba(255,150,60,0)");
+        c.fillStyle = tg; c.beginPath(); c.arc(toy.x, tyy, 5, 0, 7); c.fill();
       }
       // Pasto suave.
       c.lineCap = "round";
@@ -165,12 +173,13 @@
 
     // Cara de frente, como la foto: mejillas esponjosas, hocico blanco, ojos ámbar y sonrisa.
     function frontHead(c, t, turn) {
-      var cx = 51, cy = 30, tilt = Math.sin(t * 0.7) * 0.06 + (1 - turn) * -0.5 - flare * 0.12;
+      var cx = 51 + look.x * 2.5, cy = 30 + look.y * 1.5;
+      var tilt = Math.sin(t * 0.7) * 0.05 + (1 - turn) * -0.5 + look.x * 0.12 + pet * 0.2;
       c.save(); c.globalAlpha *= turn; c.translate(cx, cy + (1 - turn) * -6); c.rotate(tilt);
       // Orejas con punta negra e interior claro.
       for (var s = -1; s <= 1; s += 2) {
         var tw = s === 1 ? Math.max(0, Math.sin(t * 0.7) - 0.93) * 0.6 : 0;
-        c.save(); c.scale(s, 1); c.rotate(-tw);
+        c.save(); c.scale(s, 1); c.rotate(-tw + pet * 0.3);
         c.fillStyle = "#e9842a"; path(c, [5, -9, 8, -14, 12, -20, 15, -24, 17, -16, 16, -8, 14, -3, 10, -5, 7, -7, 5, -9]); c.fill();
         c.fillStyle = "#1a0d08"; path(c, [13, -19, 14, -21, 15, -23, 15, -24, 16.5, -20, 16.6, -17, 16.4, -15, 15, -16, 14, -17, 13, -19]); c.fill();
         c.fillStyle = "#f6e2cc"; path(c, [8, -9, 10, -13, 12, -17, 14, -19, 15, -14, 14, -9, 13, -6, 11, -7, 9, -8, 8, -9]); c.fill();
@@ -188,16 +197,13 @@
       // Mejillas y hocico blancos.
       path(c, [0, 1, 6, 1, 13, 4, 16, 8, 12, 14, 6, 16, 0, 16, -6, 16, -12, 14, -16, 8, -13, 4, -6, 1, 0, 1]);
       fluffy(c, "#fbf3ea", "#e8dccd");
-      // Ojos ámbar, un poco rasgados y dulces; parpadean.
-      var blink = (t % 4.7) < 0.15 ? 0.12 : 1;
+      // Ojos cerrados y felices (como arquitos) y rubor que crece al acariciarlo.
       for (s = -1; s <= 1; s += 2) {
-        c.save(); c.translate(s * 7, -2); c.rotate(s * 0.18);
-        c.fillStyle = "#1a0b06"; c.beginPath(); c.ellipse(0, 0, 2.6, 1.8 * blink, 0, 0, 7); c.fill();
-        if (blink === 1) {
-          c.fillStyle = "#b8641c"; c.beginPath(); c.ellipse(0, 0.1, 1.7, 1.4, 0, 0, 7); c.fill();
-          c.fillStyle = "#120806"; c.beginPath(); c.arc(0, 0.1, 0.8, 0, 7); c.fill();
-          c.fillStyle = "#ffffff"; c.beginPath(); c.arc(-0.6, -0.5, 0.45, 0, 7); c.fill();
-        }
+        c.fillStyle = "rgba(255,130,150," + (0.35 + 0.55 * pet).toFixed(2) + ")";
+        c.beginPath(); c.ellipse(s * 9.5, 4, 2.6, 1.6, 0, 0, 7); c.fill();
+        c.save(); c.translate(s * 7 + look.x * 0.8, -2 + look.y * 0.5);
+        c.strokeStyle = "#2a120a"; c.lineWidth = 1.2 + pet * 0.3; c.lineCap = "round";
+        c.beginPath(); c.moveTo(-2.6, 0.8); c.quadraticCurveTo(0, -2 - pet * 0.6, 2.6, 0.8); c.stroke();
         c.restore();
       }
       // Nariz y sonrisa.
@@ -243,14 +249,40 @@
         for (var m = 0; m < gr.length; m += 3) ctx.fillText(gr[m], gr[m + 1], gr[m + 2]);
       }
       flare = Math.max(0, flare - 0.008);
+      // Hacia dónde mira: la luciérnaga, el puntero o un vaivén suave.
+      if (toy && t - toy.t0 > 4) toy = null;
+      var tx = lookT.x, ty = lookT.y;
+      if (toy) { tx = clamp((toy.x - 51) / 30); ty = clamp((toy.y - (t - toy.t0) * 2 - 30) / 30); }
+      look.x += (tx - look.x) * 0.06; look.y += (ty - look.y) * 0.06;
+      pet += ((petting ? 1 : 0) - pet) * 0.05;
     }
 
     function loop(ms) { frame(ms / 1000); requestAnimationFrame(loop); }
     window.addEventListener("resize", resize);
-    canvas.addEventListener("pointerdown", function () {
-      flare = 1;
+    function clamp(v) { return Math.max(-1, Math.min(1, v)); }
+    function units(e) { return { x: (e.clientX - ox) / S, y: (e.clientY - oy) / S }; }
+    function heartsAt(n, x, y) {
       var now = performance.now() / 1000;
-      for (var i = 0; i < 8; i++) hearts.push({ x: ox + (40 + Math.random() * 20) * S, y: oy + 8 * S, t0: now + i * 0.12, ph: Math.random() * 6 });
+      for (var i = 0; i < n; i++) hearts.push({ x: x + (Math.random() - 0.5) * 30, y: y, t0: now + i * 0.12, ph: Math.random() * 6 });
+    }
+    // Mirarte, dejarse acariciar (pasar el dedo o el ratón por su cabeza), mover la cola y seguir luciérnagas.
+    window.addEventListener("pointermove", function (e) {
+      var u = units(e);
+      lookT.x = clamp((u.x - 51) / 40); lookT.y = clamp((u.y - 30) / 40);
+      var wasPetting = petting;
+      petting = Math.hypot(u.x - 51, u.y - 30) < 18;
+      if (petting && wasPetting) {
+        rub += Math.hypot(e.movementX || 0, e.movementY || 0);
+        if (rub > 60) { rub = 0; heartsAt(1, e.clientX, e.clientY - 10); }
+      }
+    });
+    window.addEventListener("pointerleave", function () { petting = false; lookT.x = lookT.y = 0; });
+    canvas.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") { petting = false; } });
+    canvas.addEventListener("pointerdown", function (e) {
+      var u = units(e);
+      if (Math.hypot(u.x - 51, u.y - 30) < 18) { petting = true; pet = 1; heartsAt(6, e.clientX, e.clientY - 20); }
+      else if (u.y > 84 && u.y < 118 && u.x > 15 && u.x < 85) { flare = 1; heartsAt(3, e.clientX, e.clientY - 10); }
+      else toy = { x: u.x, y: u.y, t0: performance.now() / 1000 };
     });
     resize();
     window.__zorro = { frame: frame, scene: scene, intro: reduce ? 1 : null };
