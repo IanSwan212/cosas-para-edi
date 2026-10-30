@@ -19,7 +19,8 @@
     header p { margin: 6px 0 0; font-size: clamp(14px, 1.6vw, 17px); color: var(--dim); letter-spacing: 0.03em; }
     .hint { position: fixed; left: 0; right: 0; bottom: max(22px, env(safe-area-inset-bottom)); text-align: center;
       margin: 0; padding: 0 60px; font-style: italic; font-size: 17px; color: var(--dim); pointer-events: none;
-      animation: fade-in 1.5s ease 3s both; }
+      animation: fade-in 2.5s ease 5s both; }
+    .hint span { display: block; margin-top: 4px; font-size: 13px; font-style: normal; letter-spacing: 0.04em; opacity: 0.7; }
     @keyframes fade-in { from { opacity: 0; } }
   </style>
 </head>
@@ -29,7 +30,7 @@
     <h1>Un zorro para ti</h1>
     <p>Mirándote, pensando en ti</p>
   </header>
-  <p class="hint">Acarícialo y tócalo varias veces · toca el cielo</p>
+  <p class="hint">«Serás para mí único en el mundo»<span>— El Principito, Antoine de Saint-Exupéry</span></p>
   <script>
     // Zorro rojo suave y esponjoso, sentado de espaldas en el pasto y mirando hacia arriba con los ojos
     // cerrados, con la cola enroscada por delante; en ASCII de colores como el ramo y la luna.
@@ -54,8 +55,8 @@
       cols = Math.ceil(W / cellW); rows = Math.ceil(H / cellH);
       off.width = cols; off.height = rows;
       // Escena en unidades: el zorro ocupa x 15..95, y 8..114 (y hacia abajo).
-      S = Math.min(W / 125, (H * 0.68) / 108);
-      ox = W / 2 - 55 * S; oy = H * 0.92 - 114 * S;
+      S = Math.min(W / 125, (H * 0.62) / 108);
+      ox = W / 2 - 55 * S; oy = H * 0.84 - 114 * S;
     }
 
     function path(c, pts) {
