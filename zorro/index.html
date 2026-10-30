@@ -40,7 +40,6 @@
     var RAMP = " .'`,:;\"^~-_+=<>il!/\|()1{}[]?tfjrxnuvczXYUJCLQ0Ozmwqpdbkhao*#";
     var canvas = document.getElementById("art"), ctx = canvas.getContext("2d");
     var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var W, H, cellW, cellH, cols, rows, S, ox, oy, flare = 0, hearts = [], t0 = null, lastHeart = 0;
     var look = { x: 0, y: 0 }, lookT = { x: 0, y: 0 }, pet = 0, petting = false, rub = 0, toy = null;
 
@@ -303,8 +302,9 @@
       else toy = { x: u.x, y: u.y, t0: performance.now() / 1000 };
     });
     resize();
-    window.__zorro = { frame: frame, scene: scene, intro: reduce ? 1 : null };
-    if (reduce || /debug/.test(location.search)) frame(1); else requestAnimationFrame(loop);
+    window.__zorro = { frame: frame, scene: scene, intro: null };
+    // Siempre se anima (son movimientos suaves), aunque el sistema tenga reducidas las animaciones.
+    if (/debug/.test(location.search)) frame(1); else requestAnimationFrame(loop);
   </script>
 </body>
 </html>
