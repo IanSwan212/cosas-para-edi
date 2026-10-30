@@ -29,7 +29,7 @@
     <h1>Un zorro para ti</h1>
     <p>Mirándote, pensando en ti</p>
   </header>
-  <p class="hint">Acarícialo · toca su cola · toca el cielo</p>
+  <p class="hint">Acarícialo y tócalo varias veces · toca el cielo</p>
   <script>
     // Zorro rojo suave y esponjoso, sentado de espaldas en el pasto y mirando hacia arriba con los ojos
     // cerrados, con la cola enroscada por delante; en ASCII de colores como el ramo y la luna.
@@ -41,7 +41,7 @@
     var canvas = document.getElementById("art"), ctx = canvas.getContext("2d");
     var off = document.createElement("canvas"), oc = off.getContext("2d", { willReadFrequently: true });
     var W, H, cellW, cellH, cols, rows, S, ox, oy, flare = 0, hearts = [], t0 = null, lastHeart = 0;
-    var look = { x: 0, y: 0 }, lookT = { x: 0, y: 0 }, pet = 0, petting = false, rub = 0, toy = null;
+    var look = { x: 0, y: 0 }, lookT = { x: 0, y: 0 }, pet = 0, petting = false, rub = 0, toy = null, excite = 0;
 
     function hash(x, y) { var h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return h - Math.floor(h); }
 
@@ -100,7 +100,12 @@
       // Entrada sin salto: aparece suave, mira al cielo y luego voltea hacia el frente.
       var turn = smooth(0.6, 0.68, intro), turnRot = smooth(0.35, 0.62, intro);
       var airborne = 0, vel = 0;
-      pose = { lift: 0, dx: 0, rot: 0, arch: 0, sx: 1, sy: 1, alpha: smooth(0, 0.25, intro) };
+      // Emoción (al tocarlo o acariciarlo varias veces): saltitos, meneo, cola a toda velocidad.
+      var ex = smooth(0.25, 0.7, excite), hop = Math.abs(Math.sin(t * 9)) * ex;
+      flick += Math.sin(t * 18) * 5 * ex;
+      pose = { lift: hop * 5, dx: 0, rot: Math.sin(t * 12) * 0.05 * ex, arch: Math.sin(t * 9) * 0.0015 * ex,
+        sx: 1 + (1 - hop) * 0.05 * ex, sy: 1 - (1 - hop) * 0.06 * ex + hop * 0.03 * ex, alpha: smooth(0, 0.25, intro) };
+      if (ex > 0.3 && Math.random() < 0.25 * ex) addHeart(30 + Math.random() * 50, 20 + Math.random() * 40, t, 0.8);
       flick += vel * airborne * -8;                                       // la cola se queda atrás
       var stage = c; c = sctx;
       sctx.setTransform(1, 0, 0, 1, 0, 0); sctx.clearRect(0, 0, spr.width, spr.height);
@@ -224,7 +229,7 @@
       // Orejas con punta negra e interior claro.
       for (var s = -1; s <= 1; s += 2) {
         var tw = s === 1 ? Math.max(0, Math.sin(t * 0.7) - 0.93) * 0.6 : 0;
-        c.save(); c.scale(s, 1); c.rotate(-tw + pet * 0.3);
+        c.save(); c.scale(s, 1); c.rotate(-tw + pet * 0.3 * (1 - excite) - excite * 0.15 + Math.sin(t * 14) * 0.06 * excite);
         c.fillStyle = "#e9842a"; path(c, [5, -9, 8, -14, 12, -20, 15, -24, 17, -16, 16, -8, 14, -3, 10, -5, 7, -7, 5, -9]); c.fill();
         c.fillStyle = "#1a0d08"; path(c, [13, -19, 14, -21, 15, -23, 15, -24, 16.5, -20, 16.6, -17, 16.4, -15, 15, -16, 14, -17, 13, -19]); c.fill();
         c.fillStyle = "#f6e2cc"; path(c, [8, -9, 10, -13, 12, -17, 14, -19, 15, -14, 14, -9, 13, -6, 11, -7, 9, -8, 8, -9]); c.fill();
@@ -295,6 +300,7 @@
       if (toy) { tx = clamp((toy.x - 51) / 30); ty = clamp((toy.y - (t - toy.t0) * 2 - 30) / 30); }
       look.x += (tx - look.x) * 0.06; look.y += (ty - look.y) * 0.06;
       pet += ((petting ? 1 : 0) - pet) * 0.05;
+      excite = Math.max(0, excite - 0.0035);
     }
 
     function loop(ms) { frame(ms / 1000); requestAnimationFrame(loop); }
@@ -310,6 +316,7 @@
       var now = performance.now() / 1000, u = units({ clientX: x, clientY: y });
       for (var i = 0; i < n; i++) addHeart(u.x + (Math.random() - 0.5) * 12, u.y, now + i * 0.12, 1.3);
     }
+    // Si lo tocas o acaricias varias veces seguidas se emociona (se pasa en unos segundos).
     // Mirarte, dejarse acariciar (pasar el dedo o el ratón por su cabeza), mover la cola y seguir luciérnagas.
     window.addEventListener("pointermove", function (e) {
       var u = units(e);
@@ -318,15 +325,15 @@
       petting = Math.hypot(u.x - 51, u.y - 30) < 18;
       if (petting && wasPetting) {
         rub += Math.hypot(e.movementX || 0, e.movementY || 0);
-        if (rub > 60) { rub = 0; heartsAt(1, e.clientX, e.clientY - 10); }
+        if (rub > 60) { rub = 0; heartsAt(1, e.clientX, e.clientY - 10); excite = Math.min(1, excite + 0.12); }
       }
     });
     window.addEventListener("pointerleave", function () { petting = false; lookT.x = lookT.y = 0; });
     canvas.addEventListener("pointerup", function (e) { if (e.pointerType !== "mouse") { petting = false; } });
     canvas.addEventListener("pointerdown", function (e) {
       var u = units(e);
-      if (Math.hypot(u.x - 51, u.y - 30) < 18) { petting = true; pet = 1; heartsAt(6, e.clientX, e.clientY - 20); }
-      else if (u.y > 84 && u.y < 118 && u.x > 15 && u.x < 85) { flare = 1; heartsAt(3, e.clientX, e.clientY - 10); }
+      if (Math.hypot(u.x - 51, u.y - 30) < 18) { petting = true; pet = 1; heartsAt(6, e.clientX, e.clientY - 20); excite = Math.min(1, excite + 0.3); }
+      else if (u.y > 84 && u.y < 118 && u.x > 15 && u.x < 85) { flare = 1; heartsAt(3, e.clientX, e.clientY - 10); excite = Math.min(1, excite + 0.3); }
       else toy = { x: u.x, y: u.y, t0: performance.now() / 1000 };
     });
     resize();
