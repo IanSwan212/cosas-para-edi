@@ -95,7 +95,7 @@
         c.strokeStyle = i % 3 ? "#7fa83a" : "#a9c95a"; c.lineWidth = 0.8;
         c.beginPath(); c.moveTo(gx, 114); c.quadraticCurveTo(gx + sw * 0.5, 114 - gh * 0.6, gx + sw, 114 - gh); c.stroke();
       }
-      // Entrada: el zorro llega de un salto desde la derecha, aterriza con suavidad, se acomoda,
+      // Entrada: el zorro salta hacia arriba en su sitio, aterriza con suavidad, se acomoda,
       // mira al cielo y luego voltea hacia el frente.
       if (t0 == null) t0 = t;
       var intro = window.__zorro && window.__zorro.intro != null ? window.__zorro.intro : Math.min(1, (t - t0) / 6.5);
@@ -103,7 +103,7 @@
       var jump = Math.min(1, intro / 0.28), land = smooth(0.26, 0.42, intro), turn = smooth(0.5, 0.92, intro);
       var sit = smooth(0.24, 0.31, intro), squash = Math.sin(Math.PI * land) * (1 - land);
       if (sit < 1) {
-        var jx = 55 + (1 - jump) * 85, jy = 97 - Math.sin(Math.PI * jump) * 32 + (1 - jump) * 0;
+        var jx = 52, jy = 97 - Math.sin(Math.PI * jump) * 42;          // salto hacia arriba, en su sitio
         leapFox(c, jx, jy, jump, t, (1 - sit) * Math.min(1, intro * 10));
       }
       c.save(); c.globalAlpha = sit;
@@ -194,7 +194,7 @@
     function leapFox(c, x, y, p, t, alpha) {
       var lerp = function (a, b, k) { return a + (b - a) * k; };
       var k1 = Math.min(1, p * 2), k2 = Math.max(0, p * 2 - 1);
-      var pitch = lerp(0.35, -0.3, p), stretch = 1 + 0.18 * Math.sin(Math.PI * p);
+      var pitch = lerp(1.15, -0.25, p), stretch = 1 + 0.18 * Math.sin(Math.PI * p);
       c.save(); c.globalAlpha *= alpha; c.translate(x, y); c.rotate(pitch);
       c.lineCap = "round"; c.lineJoin = "round";
       function leg(hx, hy, a1, a2, len, col, w) {
