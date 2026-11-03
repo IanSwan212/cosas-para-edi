@@ -17,7 +17,7 @@ test("la misma semilla produce la misma planta", () => {
 });
 
 test("tiene un tamaño razonable", () => {
-  assert.ok(plant.triads.length >= 60 && plant.triads.length <= 800, `tríadas: ${plant.triads.length}`);
+  assert.ok(plant.triads.length >= 60 && plant.triads.length <= 1400, `tríadas: ${plant.triads.length}`);
   assert.ok(plant.leaves.length >= 150, `hojas: ${plant.leaves.length}`);
   assert.ok(plant.bounds.min[1] > -0.01, "nada bajo el suelo");
 });

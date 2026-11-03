@@ -87,7 +87,7 @@ const FRAG = /* glsl */ `
         float lum = dot(groundCol, vec3(0.299, 0.587, 0.114));
         float idx = clamp(floor(pow(lum, 1.1) * 1.6 * (glyphs - 1.0)), 1.0, glyphs - 1.0);
         float mask = texture2D(tGlyphs, vec2((idx + local.x) / glyphs, local.y)).r;
-        gl_FragColor = vec4(groundCol * (0.55 + 0.9 * mask), 1.0);
+        gl_FragColor = vec4(groundCol * (0.75 + 0.5 * mask), 1.0);
       }
       return;
     }
@@ -101,9 +101,11 @@ const FRAG = /* glsl */ `
     // luminosidad se expresa con la densidad del glifo, sobre un fondo tenue del mismo color.
     float peak = max(max(col.r, col.g), col.b);
     vec3 hue = col / max(peak, 0.001);
-    vec3 bright = mix(min(col * 1.3, vec3(1.0)), hue * min(1.0, peak * 1.35), 0.35);
+    // Para que se vea más real, el color casi no se exagera.
+    vec3 bright = mix(min(col * 1.15, vec3(1.0)), hue * min(1.0, peak * 1.2), 0.2);
     bright.b *= 0.86; // entre glifos oscuros el magenta tiende a verse violeta: se calienta un poco
-    vec3 ink = min(bright * (0.4 + 1.0 * mask), vec3(1.0));
+    // Cada celda conserva casi todo su color (la imagen se lee como una foto) y el glifo le da textura.
+    vec3 ink = min(bright * (0.68 + 0.5 * mask), vec3(1.0));
     gl_FragColor = vec4(mix(under * 0.85, ink, edge), 1.0);
   }
 `;
@@ -137,8 +139,9 @@ export class AsciiView {
 
   resize(width, height) {
     const dpr = this.renderer.getPixelRatio();
-    // Celdas finas: unos 220 caracteres en el lado corto, como el ramo.
-    const cellH = Math.max(3.4, Math.min(6, Math.min(width, height) / 220)) * dpr;
+    // Celdas muy finas: unos 280 caracteres en el lado corto; los glifos dan textura sin
+    // perder la forma de la planta.
+    const cellH = Math.max(3, Math.min(5, Math.min(width, height) / 280)) * dpr;
     const cellW = cellH * 0.62;
     const cols = Math.ceil((width * dpr) / cellW);
     const rows = Math.ceil((height * dpr) / cellH);

@@ -204,7 +204,7 @@ export function buildPlant({ seed = SEED, timing = TIMING } = {}) {
       const rad = qRot(qAxis(a.t, az), perp(a.t));
       addLeaf(b, s, a, rad);
       if (b.depth <= 2 && R() < 0.4) addThorn(b, s, a, mul(rad, -1));
-      if ((b.depth === 2 && R() < 0.2) || (b.depth === 3 && R() < 0.12) || (b.depth === 1 && s > 0.6 && R() < 0.12)) addCluster(b, s, a, rad);
+      if ((b.depth === 2 && R() < 0.34) || (b.depth === 3 && R() < 0.26) || (b.depth === 1 && s > 0.55 && R() < 0.18)) addCluster(b, s, a, rad);
     }
     if (b.depth >= 2) { const a = at(b, 1); addCluster(b, 1, a, perp(a.t)); }
   }
