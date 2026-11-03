@@ -2,8 +2,10 @@
 //
 // Cada carácter es una partícula. Las formas (el sobre con su sello y la peonía con sus
 // rayos de luz) se dibujan primero en un lienzo oculto; de ahí sale, por celda, el carácter
-// (según el brillo) y su color. Las partículas llegan a formar el sobre, el sello late, y al
-// abrirse (sola a los pocos segundos o al tocarla) estallan y se vuelven a juntar como peonía.
+// (según el brillo) y su color. Las partículas llegan a formar el sobre y el sello late. Al
+// abrirse (sola a los pocos segundos o al tocarla) el sello destella, se enciende una línea al
+// rojo vivo en el borde de abajo y el fuego sube por el sobre: cada carácter se calienta, se
+// vuelve llama, suelta chispas y de ese fuego nace la peonía, del tallo hacia arriba.
 // Todo depende de un solo tiempo t, así que la animación no depende de los cuadros por segundo.
 
 const RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
@@ -12,11 +14,14 @@ const ctx = canvas.getContext("2d");
 const hint = document.getElementById("hint");
 
 let W = 0, H = 0, CW = 0, CH = 0, COLS = 0, ROWS = 0, DPR = 1;
-let parts = [], stars = [];
+let parts = [], stars = [], sparks = [];
+let box = { x0: 0, x1: 0, y0: 0, y1: 0 }; // dónde está el sobre
 let t0 = performance.now() / 1000, openAt = Infinity, formedAt = Infinity;
 
 const AUTO_OPEN = 5.2; // segundos tras los que la carta se abre sola
-const INTRO = 2.6, BURST = 1.1, GATHER = 2.4;
+const INTRO = 2.6;
+const FRONT_START = 0.45, BURN = 2.4, GATHER = 1.9; // fuego: arranque, subida y renacer como flor
+const FIRE = "()(){}<>^*';:"; // caracteres de llama
 
 const rand = (a, b) => a + (b - a) * Math.random();
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -162,12 +167,12 @@ function drawPeony(g, cx, cy, s) {
 }
 
 // Dibuja una forma en un lienzo oculto y la convierte en celdas: carácter, color y posición.
-function sample(draw) {
+function sample(draw, scale = 1) {
   const px = 6, py = 10; // píxeles por celda en el lienzo oculto
   const c = document.createElement("canvas");
   c.width = COLS * px; c.height = ROWS * py;
   const g = c.getContext("2d", { willReadFrequently: true });
-  const s = Math.min(c.width / 2.6, c.height / 4.4);
+  const s = Math.min(c.width / 2.6, c.height / 4.4) * scale;
   draw(g, c.width / 2, c.height * 0.38, s);
   const data = g.getImageData(0, 0, c.width, c.height).data;
   const cells = [];
@@ -204,29 +209,58 @@ function build() {
   CH = Math.max(7, Math.min(13, Math.min(W * 1.5, H) / 95));
   CW = CH * 0.6;
   COLS = Math.ceil(W / CW); ROWS = Math.ceil(H / CH);
-  const env = sample(drawEnvelope);
+  const env = sample(drawEnvelope, 1.45);
   const peo = sample(drawPeony);
   const N = Math.max(env.length, peo.length);
   const pick = (arr, i) => arr[Math.floor((i * arr.length) / N)];
-  env.sort((a, b) => a.x - b.x || a.y - b.y);
-  peo.sort((a, b) => a.x - b.x || a.y - b.y);
+  box = {
+    x0: Math.min(...env.map((c) => c.x)), x1: Math.max(...env.map((c) => c.x)),
+    y0: Math.min(...env.map((c) => c.y)), y1: Math.max(...env.map((c) => c.y)),
+  };
+  // El fuego sube de abajo hacia arriba y la flor nace del tallo hacia arriba: lo primero que se
+  // quema del sobre es lo primero que aparece de la peonía.
+  env.sort((a, b) => b.y - a.y || a.x - b.x);
+  peo.sort((a, b) => b.y - a.y || a.x - b.x);
   parts = Array.from({ length: N }, (_, i) => {
     const e = i < env.length ? env[i] : { ...pick(env, i), ghost: true };
     const p = i < peo.length ? peo[i] : { ...pick(peo, i), ghost: true };
-    const ang = Math.random() * Math.PI * 2;
     return {
       e, p,
       sx: rand(-0.1, 1.1) * W, sy: rand(-0.1, 1.1) * H, // de dónde llega al principio
       delay: (e.y / H) * 0.9 + rand(0, 0.5),
-      bx: Math.cos(ang) * rand(0.15, 0.55) * Math.min(W, H), by: Math.sin(ang) * rand(0.15, 0.55) * Math.min(W, H),
-      swirl: rand(-1, 1), late: rand(0, 0.6), ph: rand(0, 6.28),
+      burn: burnTime(e.x, e.y) + rand(0, 0.12), life: rand(0.6, 1.1),
+      ph: rand(0, 6.28), drift: rand(-1, 1),
     };
+  });
+  sparks = Array.from({ length: Math.round(env.length / 14) }, () => {
+    const x = rand(box.x0, box.x1);
+    const born = FRONT_START + rand(0, BURN);
+    return { x, born, y: frontY(x, born), vx: rand(-25, 25), vy: -rand(50, 150), life: rand(0.8, 1.8), ph: rand(0, 6.28) };
   });
   stars = Array.from({ length: Math.round((W * H) / 9000) }, () => ({ x: rand(0, W), y: rand(0, H), ph: rand(0, 6.28) }));
   return true;
 }
 
 const mix = (a, b, k) => a + (b - a) * k;
+const mix3 = (a, b, k) => [mix(a[0], b[0], k), mix(a[1], b[1], k), mix(a[2], b[2], k)];
+const ragged = (x) => (Math.sin(x * 0.031) + 0.6 * Math.sin(x * 0.083 + 1.7)) * CH * 1.4;
+
+// Altura del frente de fuego en la columna x a los `since` segundos de abrir: sube del borde de
+// abajo al de arriba, con un borde irregular.
+function frontY(x, since) {
+  const k = clamp01((since - FRONT_START) / BURN);
+  return box.y1 + CH - k * (box.y1 - box.y0 + CH * 6) + ragged(x) * Math.sin(k * Math.PI);
+}
+// Cuándo llega el fuego a la celda (x, y).
+function burnTime(x, y) {
+  return FRONT_START + clamp01((box.y1 + CH - y + ragged(x) * 0.6) / (box.y1 - box.y0 + CH * 6)) * BURN;
+}
+// Color de una llama según su edad: amarillo, naranja, rojo y casi brasa.
+function flameColor(k) {
+  return k < 0.35 ? mix3([255, 236, 150], [255, 150, 40], k / 0.35)
+    : k < 0.75 ? mix3([255, 150, 40], [225, 50, 25], (k - 0.35) / 0.4)
+    : mix3([225, 50, 25], [110, 20, 20], (k - 0.75) / 0.25);
+}
 
 function draw(now) {
   frame(now / 1000 - t0);
@@ -259,17 +293,34 @@ function frame(t) {
         c = [c[0], c[1] + 60 * beat, c[2] + 40 * beat];
       }
     } else {
-      // Estallido desde el sobre y vuelta a juntarse como peonía, con un remolino.
-      const kb = easeOut(clamp01(since / BURST));
-      const kg = easeInOut(clamp01((since - BURST * 0.6 - q.late) / GATHER));
-      const ox = q.e.x + q.bx * kb, oy = q.e.y + q.by * kb;
-      const sw = Math.sin(kg * Math.PI) * q.swirl * Math.min(W, H) * 0.12;
-      x = mix(ox, q.p.x, kg) + sw * Math.cos(q.ph);
-      y = mix(oy, q.p.y, kg) + sw * Math.sin(q.ph);
-      ch = kg > 0.5 ? q.p.ch : q.e.ch;
-      c = [mix(q.e.c[0], q.p.c[0], kg), mix(q.e.c[1], q.p.c[1], kg), mix(q.e.c[2], q.p.c[2], kg)];
       const ea = q.e.ghost ? 0 : q.e.a, pa = q.p.ghost ? 0 : q.p.a;
-      a = mix(ea * (1 - 0.4 * kb), pa, kg);
+      const fl = (since - q.burn) / q.life; // edad de la llama (0..1)
+      const kg = easeInOut(clamp01((since - q.burn - q.life * 0.55) / GATHER));
+      const flame = () => FIRE[((t * 14 + q.ph * 9) | 0) % FIRE.length];
+      if (fl < 0) {
+        // Todavía es papel; el sello destella al abrir y lo que está junto al fuego se calienta.
+        x = q.e.x; y = q.e.y; ch = q.e.ch; c = q.e.c; a = ea;
+        if (c[0] > 200 && c[1] < 140) c = mix3(c, [255, 235, 245], clamp01(1 - since / 0.6));
+        const heat = clamp01(1 + (fl * q.life) / 0.35);
+        if (heat > 0) {
+          c = mix3(c, [255, 95, 35], heat);
+          if (Math.sin(t * 30 + q.ph * 5) > 0.3) ch = flame();
+        }
+      } else if (kg <= 0) {
+        // Llama: sube un poco temblando y parpadea.
+        x = q.e.x + Math.sin(t * 9 + q.ph) * CW * 0.6 + q.drift * fl * CW * 2;
+        y = q.e.y - fl * CH * 3.2;
+        ch = flame();
+        c = flameColor(clamp01(fl));
+        a = Math.max(ea, 0.85) * (1 - 0.35 * clamp01(fl));
+      } else {
+        // De la llama nace la peonía.
+        const fx = q.e.x + q.drift * 0.55 * CW * 2, fy = q.e.y - 0.55 * CH * 3.2;
+        x = mix(fx, q.p.x, kg); y = mix(fy, q.p.y, kg);
+        ch = kg > 0.5 ? q.p.ch : flame();
+        c = mix3(flameColor(0.55 + 0.3 * kg), q.p.c, kg);
+        a = mix(0.8, pa, kg);
+      }
       if (kg >= 1) {
         // Ya formada: destellos y un brillo que respira, como en el video.
         const tw = Math.sin(t * 2 + q.ph * 3);
@@ -281,7 +332,29 @@ function frame(t) {
     ctx.fillStyle = `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a.toFixed(2)})`;
     ctx.fillText(ch, x, y);
   }
-  if (since > BURST + GATHER + 0.6 && formedAt === Infinity) formedAt = t;
+
+  if (since >= 0) {
+    // La línea al rojo vivo del frente de fuego y la franja encendida del borde de abajo.
+    const on = clamp01((since - FRONT_START * 0.5) / 0.3) * (1 - clamp01((since - FRONT_START - BURN - 0.4) / 0.8));
+    if (on > 0) {
+      for (let x = box.x0; x <= box.x1 + CW * 0.5; x += CW) {
+        const flick = 0.75 + 0.25 * Math.sin(t * 20 + x * 0.7);
+        ctx.fillStyle = `rgba(255,${(70 + 60 * flick) | 0},40,${(on * flick).toFixed(2)})`;
+        ctx.fillText(Math.sin(x * 1.3 + t * 8) > 0 ? "=" : "~", x, frontY(x, since));
+        ctx.fillStyle = `rgba(230,30,30,${(on * 0.9).toFixed(2)})`;
+        ctx.fillText("_", x, box.y1 + CH * 0.6);
+      }
+    }
+    // Chispas que se desprenden del frente y suben.
+    for (const sp of sparks) {
+      const age = since - sp.born;
+      if (age < 0 || age > sp.life) continue;
+      const k = age / sp.life;
+      ctx.fillStyle = `rgba(255,${(220 - 140 * k) | 0},${(120 - 90 * k) | 0},${(1 - k).toFixed(2)})`;
+      ctx.fillText(k < 0.5 ? "*" : ".", sp.x + sp.vx * age + Math.sin(age * 6 + sp.ph) * CW, sp.y + sp.vy * age);
+    }
+  }
+  if (since > FRONT_START + BURN + 1.3 + GATHER && formedAt === Infinity) formedAt = t;
 }
 
 function open(t) {
