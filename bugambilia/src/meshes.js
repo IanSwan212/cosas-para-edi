@@ -11,13 +11,21 @@ import * as THREE from "three";
 
 const srgb = (c) => new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace);
 
-function inject(material, uniforms, key, header, beginNormal, beginVertex) {
+// Contraluz: el tejido delgado brilla cuando el sol queda detrás (hojas y brácteas).
+const backlight = (k) => ({
+  header: "uniform vec3 uSunView;",
+  chunk: `#include <emissivemap_fragment>
+  totalEmissiveRadiance += diffuseColor.rgb * pow(max(dot(normalize(-vViewPosition), uSunView), 0.0), 5.0) * ${k};`,
+});
+
+function inject(material, uniforms, key, header, beginNormal, beginVertex, frag = null) {
   material.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
       .replace("#include <common>", "#include <common>\n" + header)
       .replace("#include <beginnormal_vertex>", beginNormal ?? "#include <beginnormal_vertex>")
       .replace("#include <begin_vertex>", beginVertex);
+    if (frag) sh.fragmentShader = frag.header + "\n" + sh.fragmentShader.replace("#include <emissivemap_fragment>", frag.chunk);
   };
   material.customProgramCacheKey = () => key;
   return material;
@@ -164,8 +172,8 @@ attribute vec2 aWin;
 attribute float aPhase;`;
 const GROW_VERTEX = "vec3 transformed = position * (1.0 - pow(1.0 - clamp((uTime - aWin.x) / (aWin.y - aWin.x), 0.0, 1.0), 3.0));";
 
-function instanced(geometry, items, material, uniforms, key, header, normalChunk, vertexChunk) {
-  const mesh = new THREE.InstancedMesh(geometry, inject(material, uniforms, key, header, normalChunk, vertexChunk), items.length);
+function instanced(geometry, items, material, uniforms, key, header, normalChunk, vertexChunk, frag) {
+  const mesh = new THREE.InstancedMesh(geometry, inject(material, uniforms, key, header, normalChunk, vertexChunk, frag), items.length);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
   const win = new Float32Array(items.length * 2), phase = new Float32Array(items.length);
   items.forEach((it, i) => {
@@ -184,7 +192,7 @@ function instanced(geometry, items, material, uniforms, key, header, normalChunk
 
 export function createLeafMesh(plant, uniforms) {
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.62, metalness: 0 });
-  return instanced(leafGeometry(), plant.leaves, mat, uniforms, "leaf", LEAF_GLSL, LEAF_NORMAL, LEAF_VERTEX);
+  return instanced(leafGeometry(), plant.leaves, mat, uniforms, "leaf", LEAF_GLSL, LEAF_NORMAL, LEAF_VERTEX, backlight("0.9"));
 }
 
 export function createThornMesh(plant, uniforms) {
@@ -258,12 +266,14 @@ function veinTexture() {
 export function createBractMesh(plant, uniforms) {
   const count = plant.triads.length * 3;
   const mat = new THREE.MeshStandardMaterial({ map: veinTexture(), side: THREE.DoubleSide, roughness: 0.55, metalness: 0 });
-  // Un poco de luz propia: el color fucsia no se apaga en las zonas de sombra (efecto papel translúcido).
+  // Un poco de luz propia (el fucsia no se apaga en la sombra) y contraluz de papel translúcido.
+  const back = backlight("1.6");
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uGlow = uniforms.uGlow;
-    sh.fragmentShader = "uniform float uGlow;\n" + sh.fragmentShader.replace(
+    sh.uniforms.uSunView = uniforms.uSunView;
+    sh.fragmentShader = "uniform float uGlow;\n" + back.header + "\n" + sh.fragmentShader.replace(
       "#include <emissivemap_fragment>",
-      "#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * uGlow;");
+      back.chunk + "\n totalEmissiveRadiance += diffuseColor.rgb * uGlow;");
   };
   mat.customProgramCacheKey = () => "bract";
   const mesh = new THREE.InstancedMesh(bractGeometry(), mat, count);

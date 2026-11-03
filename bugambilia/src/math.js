@@ -83,3 +83,18 @@ export function frameY(y, hint) {
   Z = len(Z) < 1e-4 ? perp(Y) : norm(Z);
   return qBasis(cross(Y, Z), Y, Z);
 }
+
+// Interpolación esférica entre dos orientaciones.
+export function qSlerp(a, b, t) {
+  let d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
+  const bb = d < 0 ? b.map((x) => -x) : b;
+  d = Math.abs(d);
+  if (d > 0.9995) {
+    const q = a.map((x, i) => x + (bb[i] - x) * t);
+    const l = Math.hypot(...q);
+    return q.map((x) => x / l);
+  }
+  const th = Math.acos(d), s = Math.sin(th);
+  const wa = Math.sin((1 - t) * th) / s, wb = Math.sin(t * th) / s;
+  return a.map((x, i) => x * wa + bb[i] * wb);
+}

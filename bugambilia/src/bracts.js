@@ -5,11 +5,17 @@
 // orientación y escala, y su giro empieza con velocidad cero, así que no hay saltos.
 // El vuelo es analítico (arrastre lineal hacia una velocidad de viento, más un vaivén lateral),
 // por lo que no depende de cuántos cuadros se dibujen.
-import { add, sub, mul, cross, norm, mix3, qAxis, qMul } from "./math.js";
+//
+// Después llega una ráfaga: parte de las brácteas que vuelan se juntan y escriben «Te amo»
+// dentro de un corazón, en el orden en que se dibujaría. Cada una sale de donde va en su vuelo
+// y se mezcla suavemente (posición y orientación) hacia su lugar en el mensaje, que siempre
+// mira a la cámara (el marco `frame` llega desde la escena en cada cuadro).
+import { rng, add, sub, mul, cross, norm, mix3, qAxis, qMul, qBasis, qSlerp } from "./math.js";
 import { TIMING, progress, easeOutCubic, lerp, smoothstep, windAt } from "./timeline.js";
 
 const X = [1, 0, 0], Y = [0, 1, 0];
 const BUD = [0.74, 0.76, 0.5]; // el capullo nace verde pálido y se va tiñendo
+const LETTER = [1, 0.52, 0.8]; // las letras se aclaran para leerse sobre la planta fucsia
 const GROUND = 0.006;
 
 export function attachedPose(tri, b, t, timing = TIMING) {
@@ -36,9 +42,34 @@ export function flightPose(r, tau) {
   return { pos: flightPos(r, tau), q: qMul(qAxis(r.axis, angle), r.q0), scale: r.s0 };
 }
 
+const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+const inFrame = (f, x, y, z) => add(f.c, add(mul(f.r, x * f.scale), add(mul(f.u, y * f.scale), mul(f.f, z * f.scale))));
+
+// Lugar de la bráctea dentro del mensaje, con un leve temblor para que se sienta vivo.
+export function messagePose(m, t, frame) {
+  const pos = inFrame(frame, m.x + 0.006 * Math.sin(t * 1.3 + m.ph), m.y + 0.006 * Math.cos(t * 1.1 + m.ph), m.z);
+  const q = qMul(qBasis(frame.r, frame.u, frame.f), qAxis([0, 0, 1], m.roll + 0.1 * Math.sin(t * 1.7 + m.ph)));
+  return { pos, q };
+}
+
 // Estado completo para dibujar: pose, color y si está volando. null = todavía no existe.
-export function bractState(tri, b, t, timing = TIMING) {
-  if (b.rel && t >= b.rel.tr) return { ...flightPose(b.rel, t - b.rel.tr), color: b.color, flying: true };
+export function bractState(tri, b, t, timing = TIMING, frame = null) {
+  if (b.rel && t >= b.rel.tr) {
+    const fl = flightPose(b.rel, t - b.rel.tr);
+    const m = b.msg;
+    if (m && frame && t > m.t0) {
+      const e = easeInOut(progress(t, m.t0, m.t1));
+      const goal = messagePose(m, t, frame);
+      const arc = Math.sin(Math.PI * e); // la ráfaga los lleva en curva, no en línea recta
+      return {
+        pos: add(mix3(fl.pos, goal.pos, e), mul(sub(inFrame(frame, m.sr, m.su, m.sf), frame.c), arc)),
+        q: qSlerp(fl.q, goal.q, e),
+        scale: fl.scale * lerp(1, m.k, e),
+        color: m.text ? mix3(b.color, LETTER, e) : b.color, flying: true,
+      };
+    }
+    return { ...fl, color: b.color, flying: true };
+  }
   const a = attachedPose(tri, b, t, timing);
   if (!a) return null;
   return { ...a, color: mix3(BUD, b.color, smoothstep(0.15, 0.85, a.p)), flying: false };
@@ -84,18 +115,18 @@ export function planRelease(plant, R, timing = TIMING) {
       const tr = lerp(timing.release.start, timing.release.end, sweep);
       const a = attachedPose(tri, b, tr, timing);
       const out = norm([tri.pos[0] - center[0], 0, tri.pos[2] - center[2]]);
-      const near = R() < 0.09; // algunas pasan cerca de la cámara
+      const near = R() < 0.05; // algunas pasan cerca de la cámara, por los lados
       const k = near ? rand(1.8, 2.4) : rand(0.8, 1.6);
       let vt;
       if (near) {
-        const target = add(camPoint, [rand(-0.6, 0.6), rand(-0.3, 0.3), 0]);
+        const target = add(camPoint, [(R() < 0.5 ? -1 : 1) * rand(0.9, 1.7), rand(-0.4, 0.3), 0]);
         vt = mul(sub(target, a.pos), 1 / rand(2.2, 3.2));
       } else {
         vt = [rand(0.3, 1.15), -0.42 / k + rand(-0.05, 0.45), rand(-1.0, 0.85)];
       }
       const side = cross(vt, Y);
       const r = {
-        tr, k, vt,
+        tr, k, vt, near,
         v0: add(mul(out, rand(0.08, 0.18)), [0, rand(0.02, 0.1), 0]),
         p0: a.pos, q0: a.q, s0: a.scale,
         osc: mul(Math.hypot(...side) > 1e-6 ? norm(side) : X, rand(0.05, 0.14)),
@@ -109,4 +140,49 @@ export function planRelease(plant, R, timing = TIMING) {
       b.rel = r;
     }
   }
+}
+
+// Reparte los puntos del mensaje (coordenadas del corazón: x de -1 a 1; `order` de 0 a 1 es
+// el orden de escritura) entre las brácteas que vuelan. Las de la izquierda van a la izquierda,
+// para que los recorridos no se crucen de más.
+export function assignMessage(plant, points, timing = TIMING, seed = 2611) {
+  const R = rng(seed);
+  const rand = (a, b) => a + (b - a) * R();
+  const pool = [];
+  for (const tri of plant.triads) for (const b of tri.bracts) { b.msg = null; if (b.rel && !b.rel.near) pool.push(b); }
+  const n = Math.min(points.length, pool.length);
+  const pick = (arr) => Array.from({ length: n }, (_, i) => arr[Math.floor((i * arr.length) / n)]);
+  const chosen = pick(pool.slice().sort((a, b) => a.rel.p0[0] - b.rel.p0[0]));
+  const pts = pick(points.slice().sort((a, b) => a.x - b.x));
+  const G = timing.gust;
+  chosen.forEach((b, i) => {
+    const p = pts[i];
+    const t0 = Math.max(b.rel.tr + 0.5, lerp(G.start, G.end, p.order) + rand(0, 0.25));
+    b.msg = {
+      x: p.x, y: p.y, z: rand(-0.03, 0.03), roll: rand(-0.7, 0.7) * (p.text ? 0.5 : 1), ph: R() * Math.PI * 2,
+      sr: rand(-0.35, 0.35), su: rand(0.1, 0.45), sf: rand(-0.25, 0.25),
+      k: p.text ? rand(0.5, 0.6) : rand(0.85, 1), text: !!p.text,
+      t0, t1: t0 + rand(G.travel[0], G.travel[1]),
+    };
+  });
+  return n;
+}
+
+// Contorno de corazón (dos filas para que la línea se vea llena), en coordenadas del mensaje.
+export function heartPoints(perRow = 190) {
+  const curve = (a) => [Math.sin(a) ** 3, (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16 + 0.15];
+  const fine = Array.from({ length: 2001 }, (_, i) => curve((i / 2000) * Math.PI * 2));
+  const acc = [0];
+  for (let i = 1; i < fine.length; i++) acc.push(acc[i - 1] + Math.hypot(fine[i][0] - fine[i - 1][0], fine[i][1] - fine[i - 1][1]));
+  const total = acc[acc.length - 1], out = [];
+  for (const [row, k] of [[0, 1], [1, 0.95]]) {
+    for (let j = 0; j < perRow; j++) {
+      const d = ((j + row * 0.5) / perRow) * total;
+      let i = acc.findIndex((v) => v >= d);
+      if (i < 0) i = fine.length - 1;
+      const [x, y] = fine[i];
+      out.push({ x: x * k, y: 0.15 + (y - 0.15) * k, order: (d / total) * 0.55 });
+    }
+  }
+  return out;
 }

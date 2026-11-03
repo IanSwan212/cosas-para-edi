@@ -2,7 +2,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildPlant } from "../src/plant.js";
-import { bractState, attachedPose } from "../src/bracts.js";
+import { bractState, attachedPose, assignMessage, heartPoints, messagePose } from "../src/bracts.js";
 import { TIMING, PHASES, phaseAt } from "../src/timeline.js";
 import { len, sub, qRot } from "../src/math.js";
 
@@ -73,8 +73,30 @@ test("las que caen se quedan en el suelo", () => {
 });
 
 test("fases", () => {
-  assert.equal(PHASES.length, 6);
+  assert.equal(PHASES.length, 7);
   assert.equal(phaseAt(0).id, "aparicion");
   assert.equal(phaseAt(11).id, "plenitud");
   assert.equal(phaseAt(14).id, "liberacion");
+  assert.equal(phaseAt(18).id, "mensaje");
+});
+
+test("la ráfaga lleva las brácteas al mensaje sin saltos y las deja en su lugar", () => {
+  const p = buildPlant();
+  const pts = heartPoints();
+  const n = assignMessage(p, pts);
+  assert.equal(n, pts.length);
+  const frame = { c: [0, 1.5, 3], r: [1, 0, 0], u: [0, 1, 0], f: [0, 0, 1], scale: 1.2 };
+  let checked = 0;
+  for (const tri of p.triads) for (const b of tri.bracts) {
+    if (!b.msg) continue;
+    assert.ok(b.msg.t0 >= b.rel.tr && b.msg.t1 <= TIMING.gust.end + 0.25 + TIMING.gust.travel[1] + 1e-9);
+    const a = bractState(tri, b, b.msg.t0 - 1e-4, TIMING, frame);
+    const c = bractState(tri, b, b.msg.t0 + 1e-4, TIMING, frame);
+    assert.ok(len(sub(a.pos, c.pos)) < 1e-3, "sin salto al empezar la ráfaga");
+    const end = bractState(tri, b, b.msg.t1 + 0.5, TIMING, frame);
+    const goal = messagePose(b.msg, b.msg.t1 + 0.5, frame);
+    assert.ok(len(sub(end.pos, goal.pos)) < 1e-9, "llega a su lugar");
+    checked++;
+  }
+  assert.equal(checked, n);
 });

@@ -2,9 +2,9 @@
 // se calcula a partir de un solo tiempo t en segundos, así que se puede pausar, adelantar,
 // retroceder o cambiar de velocidad sin perder la continuidad.
 
-export const DURATION = 15;
+export const DURATION = 20;
 
-// Las seis fases (se solapan a propósito, como en una planta real).
+// Las fases (se solapan a propósito, como en una planta real); la última es el mensaje.
 export const PHASES = [
   { id: "aparicion", name: "Aparición", start: 0, end: 2 },
   { id: "ramificacion", name: "Ramificación", start: 2, end: 5 },
@@ -12,6 +12,7 @@ export const PHASES = [
   { id: "floracion", name: "Floración", start: 6, end: 11 },
   { id: "plenitud", name: "Máxima floración", start: 10, end: 12 },
   { id: "liberacion", name: "Liberación", start: 12, end: 15 },
+  { id: "mensaje", name: "Te amo", start: 15, end: 20 },
 ];
 
 // Ventanas que usa la generación de la planta; se pueden cambiar sin tocar el resto.
@@ -20,7 +21,8 @@ export const TIMING = {
   leaves: { start: 4.0, end: 8.0 },
   bloom: { start: 6.0, end: 11.0 },
   peak: { start: 10.0, end: 12.0 },
-  release: { start: 12.0, end: 14.8, fraction: 0.7 },
+  release: { start: 12.0, end: 14.6, fraction: 0.7 },
+  gust: { start: 14.4, end: 16.4, travel: [1.9, 2.5] }, // la ráfaga que escribe el mensaje
   wind: { start: 11.4, end: 13.2 },
 };
 
