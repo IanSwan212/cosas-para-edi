@@ -17,7 +17,7 @@ const stampHtml = (text) =>
     .replace(/(href=["'])(styles\.css)(\?v=[^"']*)?(["'])/g, `$1$2?v=${version}$4`);
 
 let files = 0;
-for (const dir of ["src", "ramo/src"]) {
+for (const dir of ["src", "ramo/src", "bugambilia/src"]) {
   for (const name of fs.readdirSync(path.join(root, dir))) {
     if (!name.endsWith(".js")) continue;
     const p = path.join(root, dir, name);
@@ -26,7 +26,7 @@ for (const dir of ["src", "ramo/src"]) {
     if (after !== before) { fs.writeFileSync(p, after); files++; }
   }
 }
-for (const html of ["index.html", "ramo/index.html"]) {
+for (const html of ["index.html", "ramo/index.html", "bugambilia/index.html"]) {
   const p = path.join(root, html);
   const before = fs.readFileSync(p, "utf8");
   const after = stampHtml(before);
