@@ -16,10 +16,10 @@ export const SEED = 81026;
 
 // Colores sRGB de las brácteas, con su peso: domina el fucsia.
 const PALETTE = [
-  [[0.89, 0.07, 0.55], 5], // fucsia
-  [[0.78, 0.05, 0.5], 3], // magenta
+  [[0.92, 0.06, 0.5], 5], // fucsia
+  [[0.82, 0.05, 0.46], 3], // magenta
   [[0.95, 0.16, 0.47], 2], // rosa intenso
-  [[0.71, 0.18, 0.6], 2], // rosa violáceo
+  [[0.74, 0.17, 0.55], 2], // rosa violáceo
   [[0.96, 0.43, 0.7], 1], // rosa suave
 ];
 const SPEED = [0.7, 0.8, 0.5, 0.32]; // unidades por segundo, por profundidad (antes de reescalar)

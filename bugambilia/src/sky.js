@@ -48,7 +48,7 @@ void main() {
   col += vec3(0.95, 0.45, 0.15) * pow(sd, 6.0) * 0.35;
   col += vec3(1.0, 0.58, 0.25) * pow(sd, 60.0) * 0.45;
   col = min(col, vec3(1.0));
-  col = mix(col, vec3(1.0, 0.98, 0.9), smoothstep(0.99955, 0.99972, sd));
+  col = mix(col, vec3(1.0, 0.93, 0.64), smoothstep(0.99955, 0.99972, sd)); // disco dorado
 
   // Nubes: estratos estirados que se desplazan muy despacio; más encendidas cerca del sol.
   if (h > 0.0) {

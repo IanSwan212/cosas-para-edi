@@ -62,10 +62,13 @@ const FRAG = /* glsl */ `
     vec3 col = sky ? texel.rgb : pow(aces(texel.rgb), vec3(1.0 / 2.2));
     float lum = dot(col, vec3(0.299, 0.587, 0.114));
     if (sky) {
-      // Caracteres ralos (. , :) que se espesan cerca del sol, sobre el color del cielo.
-      float idx = clamp(floor(pow(lum, 4.0) * (glyphs - 1.0)), 1.0, glyphs - 1.0);
+      // Caracteres ralos (. , :) que se espesan cerca del sol, sobre el color del cielo casi
+      // entero, para que se lea como un degradado suave y no como rayas. El sol va casi lleno.
+      float idx = clamp(floor(pow(lum, 5.0) * (glyphs - 1.0)), 1.0, glyphs - 1.0);
       float mask = texture2D(tGlyphs, vec2((idx + local.x) / glyphs, local.y)).r;
-      gl_FragColor = vec4(min(col * (0.55 + 0.6 * mask), vec3(1.0)), 1.0);
+      float base = mix(0.8, 0.92, smoothstep(0.78, 0.9, lum));
+      // El disco del sol va lleno, sin glifo, para que se distinga de su halo.
+      gl_FragColor = lum > 0.915 ? vec4(col, 1.0) : vec4(min(col * (base + 0.28 * mask), vec3(1.0)), 1.0);
       return;
     }
     if (ground) {
@@ -82,7 +85,8 @@ const FRAG = /* glsl */ `
     float peak = max(max(col.r, col.g), col.b);
     vec3 hue = col / max(peak, 0.001);
     vec3 bright = mix(min(col * 1.3, vec3(1.0)), hue * min(1.0, peak * 1.35), 0.35);
-    gl_FragColor = vec4(min(bright * (0.32 + 1.05 * mask), vec3(1.0)), 1.0);
+    bright.b *= 0.86; // entre glifos oscuros el magenta tiende a verse violeta: se calienta un poco
+    gl_FragColor = vec4(min(bright * (0.4 + 1.0 * mask), vec3(1.0)), 1.0);
   }
 `;
 

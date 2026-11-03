@@ -188,7 +188,7 @@ export function assignMessage(plant, points, timing = TIMING, seed = 2611) {
       x: p.x, y: p.y, z: rand(-0.04, 0.04), ph: R() * Math.PI * 2,
       roll: rand(-0.7, 0.7) * (p.text ? 0.5 : 1), tx: rand(-0.45, 0.45), ty: rand(-0.5, 0.5),
       sr: rand(-0.35, 0.35), su: rand(0.1, 0.45), sf: rand(-0.25, 0.25), sw: rand(-0.18, 0.18),
-      k: p.text ? rand(0.36, 0.44) : rand(0.8, 0.95), text: !!p.text,
+      k: p.k ? p.k * rand(0.9, 1.1) : p.text ? rand(0.36, 0.44) : rand(0.8, 0.95), text: !!p.text,
       t0, t1: t0 + rand(G.travel[0], G.travel[1]),
       td: lerp(F.start, F.end, sweep),
       wx: rand(0.5, 1.1), wy: rand(0.12, 0.5), wz: rand(-0.35, 0.35), cw: rand(1.5, 3),

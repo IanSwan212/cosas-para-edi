@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { buildPlant } from "./plant.js";
-import { TIMING, DURATION, windAt, phaseAt } from "./timeline.js";
+import { TIMING, DURATION, windAt } from "./timeline.js";
 import { bractState, flowerState, assignMessage, heartPoints } from "./bracts.js";
 import { createBranchMesh, createLeafMesh, createThornMesh, createBractMesh, createFlowerMesh, srgb } from "./meshes.js";
 import { createSky, createHills } from "./sky.js";
@@ -28,7 +28,7 @@ const { center, radius, min, max } = plant.bounds;
 
 // ---------- Luces: el sol bajo da contraluz y sombras largas; cielo y un relleno cálido de frente ----------
 const uniforms = { uTime: { value: 0 }, uWind: { value: 0 }, uGlow: { value: 0.2 }, uSunView: { value: new THREE.Vector3() } };
-scene.add(new THREE.HemisphereLight(0x8c80bd, 0x3a2018, 0.6));
+scene.add(new THREE.HemisphereLight(0xc99aa4, 0x3a2018, 0.6)); // cielo rosado: el fucsia no se vuelve violeta
 const sun = new THREE.DirectionalLight(0xffa25a, 3.2);
 sun.position.set(...center).addScaledVector(SUN, 20);
 sun.target.position.set(...center);
@@ -58,38 +58,59 @@ const bracts = createBractMesh(plant, uniforms);
 const flowers = createFlowerMesh(plant);
 scene.add(branches, leaves, thorns, bracts, flowers);
 
-// «Te amo» en letra manuscrita, muestreado de un canvas, dentro del contorno de un corazón.
+// «Es que te amo tanto» en letra manuscrita, arriba en el cielo, y al final un corazón pequeño.
+// Las coordenadas son las del marco del mensaje (ver updateFrame); en pantallas angostas
+// el texto va en dos renglones.
 async function messagePoints() {
-  const FONT = '280px "Great Vibes", "Segoe Script", cursive';
+  const FONT = '200px "Great Vibes", "Segoe Script", cursive';
   try { await document.fonts.load(FONT); } catch (e) {}
-  const W = 1000, H = 400, cv = document.createElement("canvas");
+  const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+  const narrow = aspect < 0.9;
+  const lines = narrow ? ["Es que", "te amo tanto"] : ["Es que te amo tanto"];
+  const LH = 210, PAD = 90, W = 1900, H = LH * lines.length + PAD * 2;
+  const cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
   const x = cv.getContext("2d", { willReadFrequently: true });
   x.font = FONT;
   x.textAlign = "center";
   x.textBaseline = "middle";
-  x.fillStyle = "#fff";
-  const TEXT = "Te amo";
-  x.fillText(TEXT, W / 2, H / 2);
-  x.strokeStyle = "#fff";
+  x.fillStyle = x.strokeStyle = "#fff";
   x.lineWidth = 4; // la letra manuscrita es fina: se engrosa un poco para que se lea hecha de pétalos
   x.lineJoin = "round";
-  x.strokeText(TEXT, W / 2, H / 2);
+  const lineY = (i) => PAD + LH * (i + 0.5);
+  lines.forEach((l, i) => { x.fillText(l, W / 2, lineY(i)); x.strokeText(l, W / 2, lineY(i)); });
   const data = x.getImageData(0, 0, W, H).data;
-  const k = 1.6 / x.measureText(TEXT).width; // el texto mide 1.6 de ancho (el corazón va de -1 a 1)
+
+  // Tamaño visible en unidades del mensaje, para que todo quede dentro del cielo.
+  const unit = Math.min(0.44, 0.45 * aspect);
+  const halfW = (0.5 * aspect) / unit, halfH = 0.5 / unit;
+  const widths = lines.map((l) => x.measureText(l).width);
+  const hs = 0.12; // medio ancho del corazón
+  const k = Math.min(2.0, halfW * 1.84 - hs * 3.4) / Math.max(...widths);
+  const yc = halfH * (narrow ? 0.5 : 0.6);
+  const toY = (py) => -(py - H / 2) * k + yc;
+
+  // El texto y el corazón quedan centrados juntos.
+  const last = lines.length - 1;
+  const shift = -(hs * 2.6) / 2;
   let pts = [];
   for (let step = 4; step < 40; step++) {
     pts = [];
     for (let py = 0, row = 0; py < H; py += step, row++) {
+      const li = Math.min(lines.length - 1, Math.max(0, Math.floor((py - PAD) / LH)));
       for (let px = row % 2 ? step / 2 : 0; px < W; px += step) {
         if (data[(Math.floor(py) * W + Math.floor(px)) * 4 + 3] > 140) {
-          pts.push({ x: (px - W / 2) * k, y: -(py - H / 2) * k + 0.36, order: 0.45 + 0.55 * (px / W), text: true });
+          pts.push({ x: (px - W / 2) * k + (li === last ? shift : 0), y: toY(py), order: ((li + px / W) / lines.length) * 0.86, text: true });
         }
       }
     }
-    if (pts.length <= 760) break;
+    if (pts.length <= 1000) break;
   }
-  return heartPoints().concat(pts);
+
+  // El corazón, pequeño, justo después de la última palabra; se dibuja al final.
+  const hx = (widths[last] / 2) * k + hs * 1.6 + shift, hy = toY(lineY(last)) + hs * 0.2;
+  const heart = heartPoints(60).map((p) => ({ x: p.x * hs + hx, y: p.y * hs + hy, order: 0.88 + (p.order / 0.55) * 0.12, k: 0.42 }));
+  return pts.concat(heart);
 }
 messagePoints().then((pts) => assignMessage(plant, pts));
 
@@ -182,51 +203,36 @@ window.addEventListener("resize", frame);
 document.addEventListener("visibilitychange", frame);
 frame();
 
-// ---------- Reloj único y controles ----------
+// ---------- Reloj único; al tocar la bugambilia, la animación vuelve a empezar ----------
 const clock = { t: 0, playing: true, speed: 1 };
-const ui = {
-  play: document.getElementById("play"),
-  restart: document.getElementById("restart"),
-  speed: document.getElementById("speed"),
-  bloom: document.getElementById("bloom"),
-  scrub: document.getElementById("scrub"),
-  phase: document.getElementById("phase"),
-  bar: document.getElementById("player"),
-};
-const SPEEDS = [0.5, 1, 2];
-ui.scrub.max = String(DURATION);
+const setPlaying = (on) => { clock.playing = on; };
 
-function setPlaying(on) {
-  clock.playing = on;
-  ui.play.setAttribute("aria-pressed", String(!on));
-  const label = on ? "Pausar" : "Reproducir";
-  ui.play.setAttribute("aria-label", label);
-  ui.play.title = label;
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function onPlant(e) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  return raycaster.intersectObjects([branches, leaves, bracts], false).length > 0;
 }
-ui.play.addEventListener("click", () => {
-  if (!clock.playing && clock.t >= DURATION + 6) clock.t = 0;
-  setPlaying(!clock.playing);
+// Un toque (no un arrastre para girar la cámara) sobre la planta la reinicia.
+let down = null;
+canvas.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+canvas.addEventListener("pointerup", (e) => {
+  if (!down) return;
+  const tap = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 8 && performance.now() - down.t < 500;
+  down = null;
+  if (tap && onPlant(e)) { clock.t = 0; setPlaying(true); }
 });
-ui.restart.addEventListener("click", () => { clock.t = 0; setPlaying(true); });
-ui.speed.addEventListener("click", () => {
-  clock.speed = SPEEDS[(SPEEDS.indexOf(clock.speed) + 1) % SPEEDS.length];
-  ui.speed.textContent = `${clock.speed}×`.replace("0.5", "½");
+// Con mouse, la manita indica que la planta se puede tocar.
+let hoverPending = false;
+canvas.addEventListener("pointermove", (e) => {
+  if (e.pointerType !== "mouse" || hoverPending || down) return;
+  hoverPending = true;
+  requestAnimationFrame(() => { hoverPending = false; canvas.style.cursor = onPlant(e) ? "pointer" : ""; });
 });
-ui.bloom.addEventListener("click", () => { clock.t = TIMING.peak.start + 1.2; setPlaying(false); });
-let scrubbing = false;
-ui.scrub.addEventListener("input", () => { scrubbing = true; clock.t = Number(ui.scrub.value); });
-ui.scrub.addEventListener("change", () => { scrubbing = false; });
-
-// La barra se aparta cuando no se usa, para que la planta sea la protagonista.
-let idle;
-const wake = () => { ui.bar.classList.remove("idle"); clearTimeout(idle); idle = setTimeout(() => ui.bar.classList.add("idle"), 3500); };
-window.addEventListener("pointermove", wake);
-window.addEventListener("pointerdown", wake);
-window.addEventListener("keydown", wake);
-wake();
 
 let last = performance.now();
-let lastPhase = "";
 function loop(now) {
   if (canvas.width !== Math.round(window.innerWidth * renderer.getPixelRatio())) frame();
   // Tiempo real aunque el navegador dibuje pocos cuadros por segundo; solo se descarta un
@@ -236,9 +242,6 @@ function loop(now) {
   last = now;
   if (clock.playing) clock.t = Math.min(clock.t + dt * clock.speed, DURATION + 40);
   updatePlant(clock.t);
-  if (!scrubbing) ui.scrub.value = String(Math.min(clock.t, DURATION));
-  const ph = phaseAt(clock.t).name;
-  if (ph !== lastPhase) { ui.phase.textContent = ph; lastPhase = ph; }
   controls.update(dt);
   ascii.render();
   requestAnimationFrame(loop);
