@@ -225,7 +225,10 @@ let last = performance.now();
 let lastPhase = "";
 function loop(now) {
   if (canvas.width !== Math.round(window.innerWidth * renderer.getPixelRatio())) frame();
-  const dt = Math.min(0.1, (now - last) / 1000);
+  // Tiempo real aunque el navegador dibuje pocos cuadros por segundo; solo se descarta un
+  // salto grande (pestaña en segundo plano) para no brincar partes de la animación.
+  const gap = (now - last) / 1000;
+  const dt = gap > 1 ? 0 : gap;
   last = now;
   if (clock.playing) clock.t = Math.min(clock.t + dt * clock.speed, DURATION + 40);
   updatePlant(clock.t);
