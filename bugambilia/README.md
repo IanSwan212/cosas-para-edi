@@ -1,6 +1,6 @@
 # Bugambilia
 
-Una bugambilia en 3D (Three.js, el mismo que usa `ramo/`) que crece al atardecer, florece y suelta sus brácteas; una ráfaga las lleva a escribir «Te amo» dentro de un corazón. Dura unos 20 segundos.
+Una bugambilia en 3D (Three.js, el mismo que usa `ramo/`) que crece al atardecer, florece y suelta sus brácteas; una ráfaga las lleva a escribir «Te amo» en letra manuscrita dentro de un corazón, y otra ráfaga se lo lleva. Dura unos 26 segundos.
 
 ## Secuencia (`src/timeline.js`)
 
@@ -12,7 +12,8 @@ Una bugambilia en 3D (Three.js, el mismo que usa `ramo/`) que crece al atardecer
 | Floración | 6–11 | Las tríadas de brácteas se abren y pasan de verde pálido a fucsia |
 | Máxima floración | 10–12 | Pausa con la planta completa; el viento empieza a subir |
 | Liberación | 12–15 | Cerca del 70 % de las brácteas se sueltan en un barrido y vuelan |
-| Te amo | 15–20 | Una ráfaga junta parte de ellas: primero dibujan el corazón y luego «Te amo», siempre de frente a la cámara |
+| Te amo | 15–21.4 | Una ráfaga junta parte de ellas: primero dibujan el corazón y luego «Te amo» en cursiva, de izquierda a derecha, siempre de frente a la cámara |
+| Se lo lleva el viento | 21.4–26 | El mensaje se deshace de izquierda a derecha: los pétalos suben, giran y se desvanecen |
 
 Todo sale de un solo tiempo `t`, así que la barra permite pausar, adelantar, retroceder y cambiar la velocidad.
 

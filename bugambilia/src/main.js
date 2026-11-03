@@ -57,28 +57,32 @@ const bracts = createBractMesh(plant, uniforms);
 const flowers = createFlowerMesh(plant);
 scene.add(branches, leaves, thorns, bracts, flowers);
 
-// «Te amo» en cursiva, muestreado de un canvas, dentro del contorno de un corazón.
+// «Te amo» en letra manuscrita, muestreado de un canvas, dentro del contorno de un corazón.
 async function messagePoints() {
-  const FONT = 'italic 700 230px "Cormorant Garamond", Georgia, serif';
+  const FONT = '280px "Great Vibes", "Segoe Script", cursive';
   try { await document.fonts.load(FONT); } catch (e) {}
-  const W = 1000, H = 320, cv = document.createElement("canvas");
+  const W = 1000, H = 400, cv = document.createElement("canvas");
   cv.width = W; cv.height = H;
   const x = cv.getContext("2d", { willReadFrequently: true });
   x.font = FONT;
   x.textAlign = "center";
   x.textBaseline = "middle";
   x.fillStyle = "#fff";
-  const TEXT = "Te amo"; // espacio un poco más ancho entre las palabras
+  const TEXT = "Te amo";
   x.fillText(TEXT, W / 2, H / 2);
+  x.strokeStyle = "#fff";
+  x.lineWidth = 4; // la letra manuscrita es fina: se engrosa un poco para que se lea hecha de pétalos
+  x.lineJoin = "round";
+  x.strokeText(TEXT, W / 2, H / 2);
   const data = x.getImageData(0, 0, W, H).data;
-  const k = 1.3 / x.measureText(TEXT).width; // el texto mide 1.3 de ancho (el corazón va de -1 a 1)
+  const k = 1.6 / x.measureText(TEXT).width; // el texto mide 1.6 de ancho (el corazón va de -1 a 1)
   let pts = [];
-  for (let step = 5; step < 40; step++) {
+  for (let step = 4; step < 40; step++) {
     pts = [];
     for (let py = 0, row = 0; py < H; py += step, row++) {
       for (let px = row % 2 ? step / 2 : 0; px < W; px += step) {
         if (data[(Math.floor(py) * W + Math.floor(px)) * 4 + 3] > 140) {
-          pts.push({ x: (px - W / 2) * k, y: -(py - H / 2) * k + 0.28, order: 0.4 + 0.6 * (px / W), text: true });
+          pts.push({ x: (px - W / 2) * k, y: -(py - H / 2) * k + 0.36, order: 0.45 + 0.55 * (px / W), text: true });
         }
       }
     }

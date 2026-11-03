@@ -73,11 +73,12 @@ test("las que caen se quedan en el suelo", () => {
 });
 
 test("fases", () => {
-  assert.equal(PHASES.length, 7);
+  assert.equal(PHASES.length, 8);
   assert.equal(phaseAt(0).id, "aparicion");
   assert.equal(phaseAt(11).id, "plenitud");
   assert.equal(phaseAt(14).id, "liberacion");
   assert.equal(phaseAt(18).id, "mensaje");
+  assert.equal(phaseAt(24).id, "despedida");
 });
 
 test("la ráfaga lleva las brácteas al mensaje sin saltos y las deja en su lugar", () => {
@@ -93,9 +94,14 @@ test("la ráfaga lleva las brácteas al mensaje sin saltos y las deja en su luga
     const a = bractState(tri, b, b.msg.t0 - 1e-4, TIMING, frame);
     const c = bractState(tri, b, b.msg.t0 + 1e-4, TIMING, frame);
     assert.ok(len(sub(a.pos, c.pos)) < 1e-3, "sin salto al empezar la ráfaga");
-    const end = bractState(tri, b, b.msg.t1 + 0.5, TIMING, frame);
-    const goal = messagePose(b.msg, b.msg.t1 + 0.5, frame);
+    assert.ok(b.msg.t1 < b.msg.td, "termina de llegar antes de que el viento se lo lleve");
+    const end = bractState(tri, b, b.msg.t1 + 0.1, TIMING, frame);
+    const goal = messagePose(b.msg, b.msg.t1 + 0.1, frame);
     assert.ok(len(sub(end.pos, goal.pos)) < 1e-9, "llega a su lugar");
+    const d0 = bractState(tri, b, b.msg.td - 1e-4, TIMING, frame);
+    const d1 = bractState(tri, b, b.msg.td + 1e-4, TIMING, frame);
+    assert.ok(len(sub(d0.pos, d1.pos)) < 1e-3 && Math.abs(d0.scale - d1.scale) < 1e-3, "sin salto al irse");
+    assert.equal(bractState(tri, b, b.msg.td + b.msg.fade + 0.01, TIMING, frame).scale, 0, "se desvanece");
     checked++;
   }
   assert.equal(checked, n);

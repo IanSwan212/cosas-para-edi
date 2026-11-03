@@ -9,13 +9,15 @@
 // Después llega una ráfaga: parte de las brácteas que vuelan se juntan y escriben «Te amo»
 // dentro de un corazón, en el orden en que se dibujaría. Cada una sale de donde va en su vuelo
 // y se mezcla suavemente (posición y orientación) hacia su lugar en el mensaje, que siempre
-// mira a la cámara (el marco `frame` llega desde la escena en cada cuadro).
+// mira a la cámara (el marco `frame` llega desde la escena en cada cuadro). Al final otra
+// ráfaga lo deshace de izquierda a derecha: cada bráctea parte de su lugar sin velocidad,
+// sube, gira y se desvanece en el viento.
 import { rng, add, sub, mul, cross, norm, mix3, qAxis, qMul, qBasis, qSlerp } from "./math.js";
 import { TIMING, progress, easeOutCubic, lerp, smoothstep, windAt } from "./timeline.js";
 
 const X = [1, 0, 0], Y = [0, 1, 0];
 const BUD = [0.74, 0.76, 0.5]; // el capullo nace verde pálido y se va tiñendo
-const LETTER = [1, 0.52, 0.8]; // las letras se aclaran para leerse sobre la planta fucsia
+const LETTER = [0.74, 0.04, 0.34]; // las letras se oscurecen a carmín para leerse sobre el cielo claro
 const GROUND = 0.006;
 
 export function attachedPose(tri, b, t, timing = TIMING) {
@@ -45,11 +47,28 @@ export function flightPose(r, tau) {
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 const inFrame = (f, x, y, z) => add(f.c, add(mul(f.r, x * f.scale), add(mul(f.u, y * f.scale), mul(f.f, z * f.scale))));
 
-// Lugar de la bráctea dentro del mensaje, con un leve temblor para que se sienta vivo.
+// Lugar de la bráctea dentro del mensaje. No queda plana como una calcomanía: cada una
+// tiene su inclinación y se mece con la brisa, como un pétalo que flota.
 export function messagePose(m, t, frame) {
-  const pos = inFrame(frame, m.x + 0.006 * Math.sin(t * 1.3 + m.ph), m.y + 0.006 * Math.cos(t * 1.1 + m.ph), m.z);
-  const q = qMul(qBasis(frame.r, frame.u, frame.f), qAxis([0, 0, 1], m.roll + 0.1 * Math.sin(t * 1.7 + m.ph)));
+  const pos = inFrame(frame,
+    m.x + 0.008 * Math.sin(t * 0.9 + m.ph) + 0.004 * Math.sin(t * 2.3 + m.ph * 2),
+    m.y + 0.007 * Math.cos(t * 1.1 + m.ph),
+    m.z + 0.02 * Math.sin(t * 0.7 + m.ph));
+  const sway = Math.sin(t * 1.7 + m.ph);
+  const q = qMul(qBasis(frame.r, frame.u, frame.f),
+    qMul(qAxis([0, 0, 1], m.roll + 0.12 * sway), qMul(qAxis([1, 0, 0], m.tx + 0.15 * sway), qAxis([0, 1, 0], m.ty + 0.2 * Math.cos(t * 1.3 + m.ph)))));
   return { pos, q };
+}
+
+// Despedida: desplazamiento (en unidades del mensaje) que arranca con velocidad cero.
+function farewellPose(m, t, frame) {
+  const tau = t - m.td;
+  const base = messagePose(m, t, frame);
+  const ramp = tau - (1 - Math.exp(-1.6 * tau)) / 1.6;
+  const curl = Math.sin(m.cw * tau + m.ph) - Math.sin(m.ph) - m.cw * Math.cos(m.ph) * tau * Math.exp(-tau);
+  const pos = add(base.pos, sub(inFrame(frame, m.wx * ramp, m.wy * ramp + 0.06 * curl, m.wz * ramp), frame.c));
+  const angle = m.spin * (tau - 0.6 * (1 - Math.exp(-tau / 0.6)));
+  return { pos, q: qMul(qAxis(m.axis, angle), base.q), fade: 1 - smoothstep(0.25, m.fade, tau) };
 }
 
 // Estado completo para dibujar: pose, color y si está volando. null = todavía no existe.
@@ -57,12 +76,18 @@ export function bractState(tri, b, t, timing = TIMING, frame = null) {
   if (b.rel && t >= b.rel.tr) {
     const fl = flightPose(b.rel, t - b.rel.tr);
     const m = b.msg;
+    if (m && frame && t > m.td) {
+      const f = farewellPose(m, t, frame);
+      return { pos: f.pos, q: f.q, scale: fl.scale * m.k * f.fade, color: m.text ? LETTER : b.color, flying: true };
+    }
     if (m && frame && t > m.t0) {
       const e = easeInOut(progress(t, m.t0, m.t1));
       const goal = messagePose(m, t, frame);
-      const arc = Math.sin(Math.PI * e); // la ráfaga los lleva en curva, no en línea recta
+      // La ráfaga los lleva en curva y con remolinos, no en línea recta.
+      const arc = Math.sin(Math.PI * e), swirl = Math.sin(2 * Math.PI * e) * (1 - e);
+      const off = inFrame(frame, m.sr * arc + m.sw * swirl, m.su * arc + 0.5 * m.sw * Math.cos(3 * Math.PI * e) * arc, m.sf * arc);
       return {
-        pos: add(mix3(fl.pos, goal.pos, e), mul(sub(inFrame(frame, m.sr, m.su, m.sf), frame.c), arc)),
+        pos: add(mix3(fl.pos, goal.pos, e), sub(off, frame.c)),
         q: qSlerp(fl.q, goal.q, e),
         scale: fl.scale * lerp(1, m.k, e),
         color: m.text ? mix3(b.color, LETTER, e) : b.color, flying: true,
@@ -154,15 +179,21 @@ export function assignMessage(plant, points, timing = TIMING, seed = 2611) {
   const pick = (arr) => Array.from({ length: n }, (_, i) => arr[Math.floor((i * arr.length) / n)]);
   const chosen = pick(pool.slice().sort((a, b) => a.rel.p0[0] - b.rel.p0[0]));
   const pts = pick(points.slice().sort((a, b) => a.x - b.x));
-  const G = timing.gust;
+  const G = timing.gust, F = timing.farewell;
   chosen.forEach((b, i) => {
     const p = pts[i];
-    const t0 = Math.max(b.rel.tr + 0.5, lerp(G.start, G.end, p.order) + rand(0, 0.25));
+    const t0 = Math.max(b.rel.tr + 0.5, lerp(G.start, G.end, p.order) + rand(0, 0.15));
+    const sweep = Math.min(1, ((p.x + 1) / 2) * 0.8 + R() * 0.2); // el viento lo deshace de izquierda a derecha
     b.msg = {
-      x: p.x, y: p.y, z: rand(-0.03, 0.03), roll: rand(-0.7, 0.7) * (p.text ? 0.5 : 1), ph: R() * Math.PI * 2,
-      sr: rand(-0.35, 0.35), su: rand(0.1, 0.45), sf: rand(-0.25, 0.25),
-      k: p.text ? rand(0.5, 0.6) : rand(0.85, 1), text: !!p.text,
+      x: p.x, y: p.y, z: rand(-0.04, 0.04), ph: R() * Math.PI * 2,
+      roll: rand(-0.7, 0.7) * (p.text ? 0.5 : 1), tx: rand(-0.45, 0.45), ty: rand(-0.5, 0.5),
+      sr: rand(-0.35, 0.35), su: rand(0.1, 0.45), sf: rand(-0.25, 0.25), sw: rand(-0.18, 0.18),
+      k: p.text ? rand(0.36, 0.44) : rand(0.8, 0.95), text: !!p.text,
       t0, t1: t0 + rand(G.travel[0], G.travel[1]),
+      td: lerp(F.start, F.end, sweep),
+      wx: rand(0.5, 1.1), wy: rand(0.12, 0.5), wz: rand(-0.35, 0.35), cw: rand(1.5, 3),
+      axis: norm([rand(-1, 1), rand(-1, 1), rand(-1, 1)]), spin: rand(2, 5) * (R() < 0.5 ? -1 : 1),
+      fade: rand(F.fade[0], F.fade[1]),
     };
   });
   return n;
