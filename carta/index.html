@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#06040a" />
+  <title>Una carta para ti</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400&display=swap" />
+  <style>
+    html, body { margin: 0; height: 100%; background: #06040a; overflow: hidden; }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+    .hint { position: fixed; left: 0; right: 0; bottom: max(28px, env(safe-area-inset-bottom)); margin: 0; text-align: center;
+      font: italic 19px "Cormorant Garamond", Georgia, serif; color: rgba(246, 231, 234, 0.55); pointer-events: none;
+      animation: fade-in 1.5s ease 3s both; transition: opacity 0.8s ease; }
+    .hint.gone { opacity: 0; animation: none; }
+    @keyframes fade-in { from { opacity: 0; } }
+  </style>
+</head>
+<body>
+  <canvas id="carta" role="img" aria-label="Una carta dibujada con caracteres de colores, con un sello de corazón; al abrirse, sus caracteres estallan y forman una peonía rosa"></canvas>
+  <p id="hint" class="hint">toca la carta</p>
+  <script type="module" src="carta.js"></script>
+</body>
+</html>
