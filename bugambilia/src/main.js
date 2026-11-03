@@ -6,12 +6,13 @@ import { TIMING, DURATION, windAt, phaseAt } from "./timeline.js";
 import { bractState, flowerState, assignMessage, heartPoints } from "./bracts.js";
 import { createBranchMesh, createLeafMesh, createThornMesh, createBractMesh, createFlowerMesh, srgb } from "./meshes.js";
 import { createSky, createHills } from "./sky.js";
+import { AsciiView, markAsGround } from "./ascii.js";
 
 // El sol del atardecer: bajo, detrás de la planta y un poco a la izquierda (de frente a la cámara).
 const SUN = new THREE.Vector3(-0.24, 0.1, -1).normalize();
 const HAZE = new THREE.Color().setRGB(0.2, 0.12, 0.13, THREE.SRGBColorSpace);
 const canvas = document.getElementById("scene");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -45,7 +46,7 @@ scene.add(fill);
 const sky = createSky(SUN.toArray(), uniforms);
 scene.add(sky, createHills(SUN.toArray()));
 const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 64).rotateX(-Math.PI / 2),
-  new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.075, 0.05, 0.045, THREE.SRGBColorSpace), roughness: 1 }));
+  markAsGround(new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.075, 0.05, 0.045, THREE.SRGBColorSpace), roughness: 1 })));
 ground.receiveShadow = true;
 scene.add(ground);
 
@@ -146,6 +147,8 @@ function updatePlant(t) {
 
 // ---------- Cámara: encuadra la planta entera según la pantalla; giro lento y discreto ----------
 const camera = new THREE.PerspectiveCamera(34, 1, 0.03, 200);
+// Todo se dibuja en arte ASCII de colores, como el ramo, la luna y el zorro.
+const ascii = new AsciiView({ renderer, scene, camera, exposure: renderer.toneMappingExposure });
 const target = new THREE.Vector3(center[0], center[1] * 0.92, center[2]);
 camera.position.set(target.x + 0.4, target.y + 0.3, target.z + 7); // casi a ras: la planta contra el cielo
 const controls = new OrbitControls(camera, canvas);
@@ -162,6 +165,7 @@ function frame() {
   const w = window.innerWidth, h = window.innerHeight;
   if (!w || !h) return;
   renderer.setSize(w, h, false);
+  ascii.resize(w, h);
   camera.aspect = w / h;
   const half = THREE.MathUtils.degToRad(camera.fov / 2);
   const height = max[1] - min[1], width = Math.max(max[0] - min[0], max[2] - min[2]);
@@ -236,12 +240,12 @@ function loop(now) {
   const ph = phaseAt(clock.t).name;
   if (ph !== lastPhase) { ui.phase.textContent = ph; lastPhase = ph; }
   controls.update(dt);
-  renderer.render(scene, camera);
+  ascii.render();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 // Para revisar cuadros concretos desde la consola.
 window.__bugambilia = {
-  plant, clock, scene, camera, renderer, render: (t) => { clock.t = t; setPlaying(false); updatePlant(t); controls.update(); renderer.render(scene, camera); },
+  plant, clock, scene, camera, renderer, render: (t) => { clock.t = t; setPlaying(false); updatePlant(t); controls.update(); ascii.render(); },
 };

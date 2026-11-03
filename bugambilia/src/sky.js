@@ -1,7 +1,9 @@
 // Atardecer: cúpula de cielo con degradado de horizonte dorado a cénit azul violáceo, halo y
 // disco del sol, nubes estiradas iluminadas por debajo, y dos cordilleras lejanas en la bruma.
 // La cúpula se dibuja siempre al fondo (profundidad máxima) y sigue a la cámara.
+// Sus colores ya son de pantalla: la vista ASCII no les aplica mapeo de tonos.
 import * as THREE from "three";
+import { markAsGround } from "./ascii.js";
 
 const SKY_VERT = `
 varying vec3 vDir;
@@ -61,7 +63,7 @@ void main() {
   } else {
     col = mix(vec3(0.42, 0.24, 0.2), vec3(0.08, 0.05, 0.07), smoothstep(0.0, 0.15, -h));
   }
-  gl_FragColor = vec4(min(col, vec3(1.0)), 1.0);
+  gl_FragColor = vec4(min(col, vec3(1.0)), 0.0); // alfa 0: la vista ASCII sabe que esta celda es cielo
 }`;
 
 export function createSky(sunDir, uniforms) {
@@ -97,7 +99,7 @@ function ridge(radius, height, seed, near, far, sunDir) {
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   g.setIndex(idx);
-  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide }));
+  const m = new THREE.Mesh(g, markAsGround(new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide })));
   m.renderOrder = -1;
   return m;
 }
