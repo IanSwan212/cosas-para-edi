@@ -5,12 +5,13 @@
 // Los caracteres llegan volando a formar el sobre y el sello late. Al abrirse (sola a los pocos
 // segundos o al tocarla) la carta se quema en su lugar: el fuego nace en el sello y se extiende
 // hacia afuera; cada carácter se calienta, se vuelve una brasa redonda ( ) ( . o que brilla en
-// amarillo y naranja, se enrojece y queda ardiendo bajito. De esas brasas aparece la peonía,
-// en la misma cuadrícula, mientras lo demás se apaga. Un halo de luz difuminado da el brillo.
+// amarillo y naranja, se enrojece y se apaga en ceniza gris que cae. Mientras la ceniza cae,
+// aparece la peonía en la misma cuadrícula. Un halo de luz difuminado da el brillo del fuego.
 // Todo depende de un solo tiempo t, así que la animación no depende de los cuadros por segundo.
 
 const RAMP = " .,:;i!lI?tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 const EMBER = "(()).o°"; // caracteres de brasa, redondos como en el video
+const ASH = ".,'`:;"; // caracteres de ceniza
 const canvas = document.getElementById("carta");
 const ctx = canvas.getContext("2d");
 const hint = document.getElementById("hint");
@@ -27,7 +28,7 @@ let glowData = null;
 const AUTO_OPEN = 5.2; // segundos tras los que la carta se abre sola
 const INTRO = 2.6;
 const IGNITE = 0.5, SPREAD = 2.6; // el fuego prende en el sello y tarda SPREAD en llegar a las orillas
-const BLOOM_AT = 3.6, BLOOM_SPREAD = 2.2; // la peonía empieza a aparecer y tarda en completarse
+const BLOOM_AT = 4.4, BLOOM_SPREAD = 2.0; // la peonía empieza a aparecer y tarda en completarse
 
 const rand = (a, b) => a + (b - a) * Math.random();
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
@@ -259,11 +260,13 @@ function build() {
     const ragged = 0.11 * Math.sin(u * 0.13 + 1.3) * Math.sin(v * 0.21 + 0.7) + 0.08 * Math.sin(u * 0.29 + v * 0.17 + 2.2)
       + 0.05 * Math.sin(u * 0.71 - v * 0.53) + rand(-0.05, 0.05);
     const db = Math.hypot(c.x - bloom.x, c.y - bloom.y) / (far * 0.35);
+    const burn = IGNITE + clamp01(d / 1.35 + ragged) * SPREAD, life = rand(0.9, 1.5);
+    const ash = burn + life + rand(0.2, 0.7); // cuándo la brasa se apaga y la ceniza empieza a caer
     return {
       ...c,
-      burn: IGNITE + clamp01(d / 1.35 + ragged) * SPREAD,
-      life: rand(0.9, 1.5),
-      show: BLOOM_AT + clamp01(db) * BLOOM_SPREAD + rand(0, 0.25),
+      burn, life, ash, fall: rand(1.8, 2.8), sway: rand(-1, 1),
+      // La flor aparece en cada lugar cuando su ceniza ya va cayendo.
+      show: Math.max(BLOOM_AT + clamp01(db) * BLOOM_SPREAD, c.e ? ash + 0.5 : 0) + rand(0, 0.25),
       sx: rand(-0.1, 1.1) * W, sy: rand(-0.1, 1.1) * H, // de dónde llega al principio
       delay: (c.y / H) * 0.9 + rand(0, 0.5),
       ph: rand(0, 6.28),
@@ -320,30 +323,43 @@ function frame(t) {
         ch = q.e.ch; c = q.e.c; a = q.e.a;
         const heat = clamp01(1 + (fl * q.life) / 0.4);
         if (heat > 0) { c = mix3(c, [255, 180, 80], heat); light = heat * 0.5; }
-      } else if (q.e) {
+      } else if (q.e && since < q.ash) {
         // Brasa: brilla, se enrojece y se queda ardiendo bajito, parpadeando.
         const k = clamp01(fl);
         const flick = 0.75 + 0.25 * Math.sin(t * 11 + q.ph * 4);
         ch = EMBER[((t * 6 + q.ph * 5) | 0) % EMBER.length];
         c = emberColor(k);
-        const embers = fl < 1 ? 1 : mix(1, 0.4, clamp01(fl - 1)); // rescoldo
-        a = embers * flick * (q.p ? 1 - pk : 1 - smooth(q.show, q.show + 1.6, since + 1));
+        a = (fl < 1 ? 1 : 0.75) * flick;
         light = (1 - k) * 1.1 * flick + 0.15;
-        light *= q.p ? 1 - pk : 1;
+      } else if (q.e && since < q.ash + q.fall) {
+        // Ceniza: se apaga a gris y cae, meciéndose, hasta desvanecerse.
+        const tau = since - q.ash, k = tau / q.fall;
+        x = q.x + Math.sin(tau * 2.4 + q.ph) * CW * 0.8 + q.sway * tau * CW * 1.5;
+        y = q.y + 0.5 * CH * 6 * tau * tau;
+        ch = ASH[(q.ph * 3 | 0) % ASH.length];
+        c = mix3([200, 70, 40], [196, 188, 182], clamp01(tau / 0.4));
+        a = 0.95 * (1 - k * k);
+        light = 0.35 * (1 - clamp01(tau / 0.35));
       }
-      if (q.p && pk > 0) {
-        // La peonía aparece sobre las brasas (o sola, fuera del sobre).
-        const base = c && a > 0 ? c : q.p.c;
-        c = mix3(base, q.p.c, pk);
-        ch = pk > 0.4 ? q.p.ch : ch || q.p.ch;
-        a = mix(a || 0, q.p.a, pk);
-        if (pk >= 1) {
-          const tw = Math.sin(t * 2 + q.ph * 3);
-          a *= 0.86 + 0.14 * tw;
-          if (tw > 0.995) c = [255, 240, 248];
+      if (c && a > 0.02) {
+        if (light > 0 && Math.abs(y - q.y) < CH) {
+          const gi = (q.row * COLS + q.col) * 4;
+          gd[gi] = Math.min(255, c[0] * light); gd[gi + 1] = Math.min(255, c[1] * light * 0.85); gd[gi + 2] = Math.min(255, c[2] * light * 0.6); gd[gi + 3] = 255;
         }
+        ctx.fillStyle = `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a.toFixed(2)})`;
+        ctx.fillText(ch, x, y);
       }
-      if (!c || !(a > 0.02)) continue;
+      if (!(q.p && pk > 0)) continue;
+      // La peonía aparece en su lugar, desde su centro hacia afuera.
+      x = q.x; y = q.y; ch = q.p.ch; c = q.p.c; a = q.p.a * pk; light = 0;
+      if (pk >= 1) {
+        const tw = Math.sin(t * 2 + q.ph * 3);
+        a *= 0.86 + 0.14 * tw;
+        if (tw > 0.995) c = [255, 240, 248];
+      } else {
+        c = mix3([255, 210, 225], c, pk); // nace con un destello claro
+      }
+      if (!(a > 0.02)) continue;
     }
     if (light > 0) {
       const gi = (q.row * COLS + q.col) * 4;
