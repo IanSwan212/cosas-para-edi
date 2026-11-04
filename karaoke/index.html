@@ -27,6 +27,12 @@
     .lyrics .now .w { --p: 0%; background: linear-gradient(90deg, var(--pink) var(--p), #f4efe7 var(--p));
       -webkit-background-clip: text; background-clip: text; color: transparent; }
     .actions { display: flex; gap: 10px; }
+    /* Las canciones para elegir, como etiquetas de garabato. */
+    .songs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: min(92vw, 620px); }
+    .songs button { font: 17px "Gochi Hand", cursive; color: #ddd; background: transparent; border: 1.5px dashed rgba(239, 237, 232, 0.4);
+      border-radius: 999px; padding: 2px 12px 4px; cursor: pointer; }
+    .songs button[aria-pressed="true"] { color: var(--ink); background: var(--paper); border-style: solid; border-color: var(--paper); }
+    .songs button:focus-visible { outline: 2px dashed var(--pink); outline-offset: 2px; }
     .actions button { font: 22px "Gochi Hand", cursive; color: var(--ink); background: var(--paper); border: 2px solid var(--ink);
       border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; padding: 4px 18px 6px; cursor: pointer;
       box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.5); }
@@ -41,6 +47,7 @@
       <div class="bar"><i class="dot" style="background:#ff5f57"></i><i class="dot" style="background:#febc2e"></i><i class="dot" style="background:#28c840"></i><span>karaoke para ti</span></div>
       <canvas id="stage" width="240" height="160" role="img" aria-label="El muñequito de garabato canta en un escenario con micrófono, telón y reflector"></canvas>
     </div>
+    <div id="songs" class="songs" aria-label="Canciones"></div>
     <div id="lyrics" class="lyrics" aria-live="polite"></div>
     <div class="actions">
       <button id="play" type="button">cantar</button>

@@ -1,0 +1,4 @@
+# Letra para el karaoke, en formato LRC: un renglón por línea con su tiempo al principio,
+# contado desde el inicio de la canción. Ejemplo de cómo se ve un renglón:
+#   [00:15.20] aquí va lo que se canta
+# Las líneas que empiezan con # no se usan. Pega aquí abajo el contenido del .lrc de esta canción.
