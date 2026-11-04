@@ -2,3 +2,37 @@
 # contado desde el inicio de la canción. Ejemplo de cómo se ve un renglón:
 #   [00:15.20] aquí va lo que se canta
 # Las líneas que empiezan con # no se usan. Pega aquí abajo el contenido del .lrc de esta canción.
+[00:12.50] Son presentimientos
+[00:16.74] Rumores entre vientos
+[00:21.60] De que vas a ese centro
+[00:26.57] Iré a ver si te encuentro
+[00:31.16] Nos vemos por la noche
+[00:35.27] En la cámara de faltas
+[00:39.77] Y entre ruido y el derroche
+[00:43.23] Te diré en voz alta
+[00:49.60] Pierdes tu tiempo
+[00:54.03] En este lugar
+[00:58.50] Ahogas lamentos
+[01:03.12] En tragos y aceptación social
+[01:07.49] 
+[01:26.84] No hay nada para ti o para mi aquí
+[01:31.54] ¿Quien nos extrañaría?
+[01:35.54] Con tu boca y la mía
+[01:38.71] Animemos los días
+[01:45.46] Pierdes tu tiempo
+[01:49.68] En este lugar
+[01:54.36] Ahogas lamentos
+[01:59.09] En tragos y aceptación social
+[02:04.17] Vente conmigo
+[02:08.85] ¿Cuál es tu afán?
+[02:12.88] De aquel falso abrigo
+[02:17.94] Vámonos no regresemos jamás
+[02:22.42] Con ellos no tenemos que sincronizar
+[02:29.02] ...no
+[02:31.88] A nuestro ritmo vamos a bailar
+[02:40.56] 
+[03:18.07] Perdamos tiempo
+[03:21.94] En otro lugar
+[03:25.96] Si tu y yo nos tenemos
+[03:31.05] No necesitamos a nadie más
+[03:52.44] 
