@@ -158,8 +158,8 @@ function moveCamera(line, t, dt) {
   // El cursor queda un poco a la derecha del centro: se ve lo recién escrito a su izquierda.
   // El editor ocupa casi todo el ancho de la pantalla, así el renglón completo se lee;
   // la cámara solo sube y baja siguiendo el renglón que se escribe.
-  const fit = Math.min(1.5, (window.innerWidth * 0.8) / 900);
-  camX += (450 - camX) * k;
+  const fit = Math.min(1.5, (window.innerWidth * 0.94) / editorWidth);
+  camX += (editorWidth / 2 - camX) * k;
   camY += (ty - camY) * k;
   const zoom = fit * (1 + 0.04 * Math.sin(t * 0.35));
   camZ += (zoom - camZ) * k;
@@ -172,6 +172,7 @@ function moveCamera(line, t, dt) {
 // ---------- Final: «¿borrar todo?» → Cancelar ----------
 
 function playEnding(since) {
+  dialog.style.top = `${camY}px`; // el aviso sale donde está mirando la cámara
   dialog.classList.toggle("on", since > 0.8 && since < 4.6);
   const cancel = document.getElementById("cancel");
   if (since > 1.2 && since < 4.6) {
@@ -264,7 +265,24 @@ function setupMarking() {
   show();
 }
 
+// El editor mide lo que el renglón más largo (en caracteres de la letra monoespaciada), para que
+// ninguno tenga que partirse en dos líneas.
+let editorWidth = 900;
+function sizeEditor() {
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+  probe.className = "ln";
+  probe.textContent = "M".repeat(10);
+  code.appendChild(probe);
+  const ch = probe.offsetWidth / 10; // medida de maquetación: no le afecta la cámara
+  probe.remove();
+  const longest = Math.max(OUTRO.length, ...lines.map((l) => l.text.length));
+  editorWidth = Math.ceil(96 + (longest + 3) * ch + 40);
+  document.getElementById("editor").style.width = `${editorWidth}px`;
+}
+
 loadPhrases().then(() => {
+  sizeEditor();
   if (MARK) setupMarking();
   requestAnimationFrame(loop);
 });
