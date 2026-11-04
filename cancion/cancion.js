@@ -259,4 +259,4 @@ loadPhrases().then(() => {
 });
 
 // Para revisar desde la consola: muestra el segundo `sec` de la parte sin sonar.
-window.__cancion = { lines, clip, at: (sec) => { debugT = sec; } };
+window.__cancion = { lines, clip, at: (sec) => { debugT = sec; }, rows: (sec) => (renderCode(sec, 0), code.querySelectorAll(".ln").length) };
