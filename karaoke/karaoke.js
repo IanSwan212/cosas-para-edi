@@ -1,10 +1,8 @@
-// El muñequito en versión karaoke, en un escenario de garabato. Hay varias canciones para elegir:
-//  - «te espero», original de esta página, tocada con Web Audio (melodía, acordes, bajo y batería);
-//  - canciones en archivo (assets/*.mp3), cuya letra sale de letras/<id>.txt en formato LRC
-//    («[mm:ss.xx] texto»), que se llena aparte. Con estas, la boca se abre con el volumen de la voz.
-// La letra se pinta de rosa palabra por palabra. El dibujo es como el del muñequito: 1 bit y
-// trazos que tiemblan.
-import { buildSong, BEAT } from "./song.js";
+// El muñequito en versión karaoke, en un escenario de garabato. Se elige una canción
+// (assets/*.mp3) y su letra sale de letras/<id>.txt en formato LRC («[mm:ss.xx] texto»).
+// El muñequito canta al ritmo de esa letra: abre la boca con cada palabra del renglón que suena
+// (y más o menos según el volumen de la voz) y la cierra cuando nadie canta. La letra se pinta de
+// rosa palabra por palabra. El dibujo es como el del muñequito: 1 bit y trazos que tiemblan.
 
 const W = 240, H = 160, FPS = 12, TAU = Math.PI * 2;
 const canvas = document.getElementById("stage");
@@ -15,7 +13,6 @@ const lyricsEl = document.getElementById("lyrics");
 const pickEl = document.getElementById("songs");
 
 const SONGS = [
-  { id: "te-espero", name: "te espero", synth: true },
   { id: "vinculo", name: "vínculo", audio: "assets/vinculo.mp3", letra: "letras/vinculo.txt" },
   { id: "camara-de-faltas", name: "cámara de faltas", audio: "assets/camara-de-faltas.mp3", letra: "letras/camara-de-faltas.txt" },
   { id: "my-one-and-only-love", name: "my one and only love", audio: "assets/my-one-and-only-love.mp3", letra: "letras/my-one-and-only-love.txt" },
@@ -58,78 +55,6 @@ function note(x, y, id) { // notita musical: cabeza, plica y banderita
   line(x + 1.8, y - 8, x + 4.5, y - 5.5, id + 6);
 }
 
-// ---------- Canción original con Web Audio ----------
-
-const hz = (m) => 440 * 2 ** ((m - 69) / 12);
-
-function synthTrack() {
-  const song = buildSong();
-  let ac = null, startAt = 0;
-  const activeNote = (t) => song.notes.find((n) => t >= n.t && t < n.t + n.dur) || null;
-  function tone(out, type, freq, t, dur, peak, attack, release) {
-    const o = ac.createOscillator(), v = ac.createGain();
-    o.type = type; o.frequency.value = freq;
-    v.gain.setValueAtTime(0, t);
-    v.gain.linearRampToValueAtTime(peak, t + attack);
-    v.gain.setTargetAtTime(peak * 0.65, t + attack, dur * 0.4);
-    v.gain.setTargetAtTime(0, t + dur, release / 3);
-    o.connect(v).connect(out);
-    o.start(t); o.stop(t + dur + release * 2 + 0.05);
-  }
-  function schedule() {
-    const master = ac.createGain();
-    master.gain.value = 0.75;
-    master.connect(ac.createDynamicsCompressor()).connect(ac.destination);
-    const T = (s) => startAt + s;
-    for (const n of song.notes) {
-      tone(master, "triangle", hz(n.midi), T(n.t), n.dur, 0.17, 0.02, 0.14);
-      tone(master, "sine", hz(n.midi + 12), T(n.t), n.dur, 0.035, 0.02, 0.1);
-    }
-    for (const c of song.chords) {
-      for (const k of c.notes) tone(master, "sine", hz(48 + k), T(c.t), c.dur - 0.05, 0.03, 0.25, 0.4);
-      for (const b of [0, 2]) if (b * BEAT < c.dur) tone(master, "triangle", hz(36 + (c.notes[0] % 12)), T(c.t + b * BEAT), BEAT * 0.9, 0.1, 0.01, 0.12);
-    }
-    const noise = ac.createBuffer(1, ac.sampleRate * 0.3, ac.sampleRate);
-    const nd = noise.getChannelData(0);
-    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-    const hit = (t, type, freq, gain, len) => {
-      const s = ac.createBufferSource(), f = ac.createBiquadFilter(), v = ac.createGain();
-      s.buffer = noise; f.type = type; f.frequency.value = freq;
-      v.gain.setValueAtTime(gain, t); v.gain.exponentialRampToValueAtTime(0.001, t + len);
-      s.connect(f).connect(v).connect(master);
-      s.start(t); s.stop(t + len + 0.02);
-    };
-    const beats = Math.floor(song.length / BEAT) - 4;
-    for (let b = 0; b < beats; b++) {
-      const t = T(b * BEAT);
-      if (b % 2 === 0) {
-        const o = ac.createOscillator(), v = ac.createGain();
-        o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.18);
-        v.gain.setValueAtTime(0.28, t); v.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-        o.connect(v).connect(master); o.start(t); o.stop(t + 0.3);
-      } else hit(t, "bandpass", 1800, 0.07, 0.12);
-      hit(t + BEAT / 2, "highpass", 7000, 0.025, 0.04);
-    }
-  }
-  return {
-    lines: song.lines,
-    ready: Promise.resolve(),
-    started: () => !!ac,
-    time: () => (ac ? ac.currentTime - startAt : 0),
-    running: () => !!ac && ac.state === "running",
-    ended: () => !!ac && ac.currentTime - startAt > song.length,
-    toggle() {
-      if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); startAt = ac.currentTime + 0.15; schedule(); }
-      else if (ac.state === "suspended") ac.resume(); else ac.suspend();
-    },
-    stop() { if (ac) ac.close(); ac = null; },
-    mouth(t) { const n = activeNote(t); return n ? 0.35 + 0.65 * Math.exp(-(t - n.t) * 5) : 0; },
-    held(t) { const n = activeNote(t); return !!n && n.dur > BEAT * 1.2 && t - n.t > 0.15; },
-    chorus(t) { const l = song.lines.find((x) => t >= x.t0 && t < x.t1); return !!l && /ven|tanto|poquito|aquí/.test(l.words.map((w) => w.text).join(" ")); },
-    beat: BEAT,
-  };
-}
-
 // ---------- Canción en archivo, con su letra LRC ----------
 
 function parseLrc(txt) {
@@ -156,6 +81,15 @@ function parseLrc(txt) {
       words: words.map((w) => { const a = r.t + (acc / total) * span; acc += w.length + 1; return { text: w, t0: a, t1: r.t + (acc / total) * span }; }),
     };
   });
+}
+
+// La palabra que se está cantando en el segundo t (o null).
+function wordAt(lines, t) {
+  for (const l of lines) {
+    if (t < l.t0) return null;
+    if (t < l.t1) return l.words.find((w) => t >= w.t0 && t < w.t1) || null;
+  }
+  return null;
 }
 
 function fileTrack(def) {
@@ -199,12 +133,18 @@ function fileTrack(def) {
       peak = Math.max(peak * 0.9995, rms);
       level += (clamp01(rms / peak) - level) * 0.5;
     },
-    mouth() { return level > 0.25 ? level : 0; },
-    held(t) {
-      if (level > 0.55) { if (heldSince < 0) heldSince = t; } else heldSince = -1;
-      return heldSince >= 0 && t - heldSince > 0.6;
+    // Boca: se abre al empezar cada palabra del renglón que suena y se va cerrando; el volumen de
+    // la voz la abre más o menos. Si no hay renglón sonando, se queda cerrada.
+    mouth(t) {
+      const w = wordAt(tr.lines, t);
+      if (!w) return 0;
+      const pulse = 0.35 + 0.65 * Math.exp(-(t - w.t0) * 6);
+      return Math.min(1, pulse * (0.55 + 0.6 * level));
     },
-    chorus() { return level > 0.8; },
+    // Ojitos cerrados de gusto cuando una palabra se sostiene.
+    held(t) { const w = wordAt(tr.lines, t); return !!w && w.t1 - w.t0 > 0.7 && t - w.t0 > 0.3; },
+    // Mano arriba cuando canta y la canción sube.
+    chorus(t) { return !!wordAt(tr.lines, t) && level > 0.75; },
     beat: 0.6,
   };
   return tr;
@@ -212,12 +152,12 @@ function fileTrack(def) {
 
 // ---------- Selección de canción ----------
 
-let def = SONGS[0], track = synthTrack();
+let def = SONGS[0], track = fileTrack(def);
 
 function choose(d) {
   if (track) track.stop();
   def = d;
-  track = d.synth ? synthTrack() : fileTrack(d);
+  track = fileTrack(d);
   shownLine = -2;
   [...pickEl.children].forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === d.id)));
   syncButtons();
@@ -329,7 +269,7 @@ function updateLyrics(t) {
   const key = `${def.id}:${idx}:${lines.length}`;
   if (key !== shownLine) {
     shownLine = key;
-    if (!lines.length && !def.synth) {
+    if (!lines.length) {
       rows[0].innerHTML = "falta la letra";
       rows[1].innerHTML = `pégala en karaoke/${def.letra}`;
     } else if (idx < 0) {
