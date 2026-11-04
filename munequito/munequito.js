@@ -113,6 +113,44 @@ function wavy(x, y, len, id) { // línea ondulada que sube (olor, vapor)
 const PET = { x: 104, y: 95, r: 18 };
 const FRIDGE = { x: 198, y: 44, w: 34, h: 77 };
 const FLOOR = 122;
+const FOX = { x: 62, y: 136 }; // el peluche de zorrito, sentado en la alfombra (y = donde se apoya)
+let foxPoke = -10; // cuándo lo tocaron por última vez (se menea)
+
+// Peluche de zorrito: orejas en punta, hocico, cola esponjosa con la punta blanca.
+function drawFox() {
+  const k = clamp01((clock - foxPoke) / 0.9);
+  const tilt = Math.sin(k * Math.PI * 4) * 0.18 * (1 - k);
+  g.save();
+  g.translate(FOX.x, FOX.y);
+  g.rotate(tilt);
+  g.scale(1.4, 1.4);
+  g.lineWidth = 1;
+  g.fillStyle = "#fff";
+  // Cola, detrás del cuerpo.
+  g.beginPath();
+  g.moveTo(5, -3);
+  g.quadraticCurveTo(17, -2, 14, -15);
+  g.quadraticCurveTo(11, -9, 4, -8);
+  g.closePath();
+  g.fill(); g.stroke();
+  line(14, -15, 11.5, -11, 700); line(11.5, -11, 14.5, -10.5, 701); // la punta blanca
+  // Cuerpo y patitas.
+  g.beginPath(); g.ellipse(0, -6, 6.5, 6, 0, 0, TAU); g.fill(); g.stroke();
+  arc(-2.8, 0, 2.2, Math.PI * 1.05, TAU * 0.98, 702); arc(2.8, 0, 2.2, Math.PI * 1.02, TAU * 0.95, 703);
+  line(-1.5, -9, 1.5, -9, 704); // el pechito
+  // Cabeza con orejas.
+  for (const s of [-1, 1]) {
+    g.beginPath(); g.moveTo(s * 2, -19); g.lineTo(s * 6, -26); g.lineTo(s * 5.6, -17); g.closePath(); g.fill(); g.stroke();
+    line(s * 4.6, -21, s * 5.4, -23.5, 705 + s);
+  }
+  g.beginPath(); g.ellipse(0, -16, 6, 5, 0, 0, TAU); g.fill(); g.stroke();
+  g.fillStyle = "#000";
+  circle(-2.2, -16.8, 0.8, 710, true); circle(2.2, -16.8, 0.8, 711, true);
+  circle(0, -14, 0.9, 712, true); // nariz
+  arc(-1, -13.4, 1, 0, Math.PI * 0.9, 713); arc(1, -13.4, 1, Math.PI * 0.1, Math.PI, 714);
+  g.restore();
+  g.lineWidth = 1.7;
+}
 
 // ---------- El cuartito ----------
 
@@ -383,6 +421,7 @@ function render() {
   g.lineCap = g.lineJoin = "round";
   const fat = act && act.kind === "feed" && !act.refused ? clock - act.t0 : -1;
   drawRoom(night, fat < 0 ? 0 : clamp01(fat / 0.25) * (1 - clamp01((fat - 1.0) / 0.3)));
+  drawFox();
   const p = drawPet();
   drawEffects(p);
   g.fillStyle = "#000";
@@ -407,6 +446,14 @@ function wake(quiet) {
   st.sleeping = false;
   btn.sleep.textContent = "dormir";
   if (!quiet) say("ya desperté");
+}
+
+function poke() {
+  wake(true);
+  foxPoke = clock;
+  st.love = clamp(st.love + 3);
+  say(pick(["es mi zorrito", "¡zorrito!", "lo abrazo cuando te extraño", "se parece a ti"]));
+  save();
 }
 
 function feed() {
@@ -460,12 +507,15 @@ btn.feed.addEventListener("click", feed);
 btn.bath.addEventListener("click", bath);
 btn.love.addEventListener("click", love);
 btn.sleep.addEventListener("click", sleep);
-// Tocar el refri le da de comer; tocarlo a él (o cualquier otra parte) es darle un besito.
+// Tocar el refri le da de comer; tocar el zorrito lo hace menearse; tocarlo a él (o cualquier
+// otra parte) es darle un besito.
 canvas.addEventListener("click", (e) => {
   const r = canvas.getBoundingClientRect();
   const x = ((e.clientX - r.left) / r.width) * W, y = ((e.clientY - r.top) / r.height) * H;
   const f = FRIDGE;
-  if (x > f.x - 2 && x < f.x + f.w + 2 && y > f.y - 2 && y < f.y + f.h + 2) feed(); else love();
+  if (x > f.x - 2 && x < f.x + f.w + 2 && y > f.y - 2 && y < f.y + f.h + 2) feed();
+  else if (x > FOX.x - 12 && x < FOX.x + 23 && y > FOX.y - 38 && y < FOX.y + 4) poke();
+  else love();
 });
 if (st.sleeping) btn.sleep.textContent = "despertar";
 
