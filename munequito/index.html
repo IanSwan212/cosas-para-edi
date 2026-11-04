@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0c0c10" />
+  <title>te extraño...</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" />
+  <style>
+    :root { --ink: #111; --paper: #efede8; }
+    html, body { margin: 0; min-height: 100%; background: #0c0c10; color: #ddd; overflow: hidden; }
+    body { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; font-family: "Gochi Hand", cursive; }
+    /* Código tenue de fondo, como el editor del video. */
+    .code { position: fixed; inset: 0; margin: 0; padding: 24px; font: 13px/1.7 ui-monospace, "Cascadia Code", Consolas, monospace;
+      color: rgba(170, 190, 255, 0.09); white-space: pre; pointer-events: none; overflow: hidden; }
+    .stage { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 16px; }
+    .window { width: min(92vw, 85vh, 620px); background: var(--paper); border-radius: 10px; overflow: hidden;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06); transform: rotate(-1.2deg); }
+    .bar { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: #e3e1dc; border-bottom: 1px solid #cfccc6; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .bar span { flex: 1; text-align: center; margin-right: 50px; font: 12px ui-sans-serif, system-ui, sans-serif; color: #555; }
+    canvas { display: block; width: 100%; aspect-ratio: 240 / 160; image-rendering: pixelated; image-rendering: crisp-edges;
+      cursor: pointer; touch-action: manipulation; }
+    .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .actions button { font: 22px "Gochi Hand", cursive; color: var(--ink); background: var(--paper); border: 2px solid var(--ink);
+      border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; padding: 4px 16px 6px; cursor: pointer;
+      box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.5); transition: transform 0.12s; }
+    .actions button:nth-child(odd) { transform: rotate(-2deg); }
+    .actions button:nth-child(even) { transform: rotate(1.5deg); }
+    .actions button:hover { transform: rotate(0) translateY(-2px); }
+    .actions button:active { transform: translateY(1px); box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5); }
+    .actions button:focus-visible { outline: 2px dashed #ff8fb5; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <pre class="code" aria-hidden="true">// muñequito.js
+const yo = new Muñequito("para ti");
+
+yo.comer(galleta);
+yo.bañar(burbujas);
+yo.apapachar(mucho);
+
+while (lejos) {
+  yo.extrañar(ti);
+}
+
+if (tú.vuelves()) {
+  yo.sonreír();
+}
+// sigo aquí.</pre>
+  <main class="stage">
+    <div class="window">
+      <div class="bar"><i class="dot" style="background:#ff5f57"></i><i class="dot" style="background:#febc2e"></i><i class="dot" style="background:#28c840"></i><span>te extraño...</span></div>
+      <canvas id="pet" width="240" height="160" role="img" aria-label="Un muñequito dibujado a mano en su cuartito, con ventana, sillón, alfombra, lámpara y refri; se puede alimentar, bañar, apapachar y poner a dormir"></canvas>
+    </div>
+    <div class="actions">
+      <button id="feed" type="button">comer</button>
+      <button id="bath" type="button">bañar</button>
+      <button id="love" type="button">apapachar</button>
+      <button id="sleep" type="button">dormir</button>
+    </div>
+  </main>
+  <script type="module" src="munequito.js"></script>
+</body>
+</html>
