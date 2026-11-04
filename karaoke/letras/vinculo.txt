@@ -2,3 +2,45 @@
 # contado desde el inicio de la canción. Ejemplo de cómo se ve un renglón:
 #   [00:15.20] aquí va lo que se canta
 # Las líneas que empiezan con # no se usan. Pega aquí abajo el contenido del .lrc de esta canción.
+[00:28.00] Este es un vínculo sin eras
+[00:33.79] En nuestros labios vive nuestro pasado
+[00:41.56] Este es un vínculo sin eras
+[00:47.16] Nuestro futuro vivimos a diario
+[00:55.24] Si acaba el mundo hoy
+[01:00.11] Si no sale el sol
+[01:03.57] No importaría pues
+[01:06.92] Tu rostro puedo ver
+[01:10.32] Tu risa es curativa
+[01:13.94] De mi alma medicina
+[01:17.14] Me haces compañía
+[01:20.91] Por telepatía
+[01:24.25] Si no estamos de frente
+[01:27.58] Te veo de reojo
+[01:31.83] En mi mente
+[01:36.56] Este es un vínculo sin eras
+[01:42.45] En nuestros labios vive nuestro pasado
+[01:50.09] Este es un vínculo sin eras
+[01:55.92] Nuestro futuro vivimos a diario
+[02:03.62] 
+[02:17.86] En tu boca me perdí
+[02:22.38] Y pude sentir
+[02:25.85] Todo tu dolor
+[02:29.16] De tiempo anterior
+[02:32.80] Y sentiste en mí
+[02:36.17] Lo que sufrí sin ti
+[02:39.63] Más hoy que te encontré
+[02:43.00] Nunca me iré
+[02:46.67] Lágrimas juntamos
+[02:50.05] Luego con un beso
+[02:53.52] En el tiempo viajamos
+[02:59.02] 
+[03:26.10] Este es un vínculo sin eras
+[03:32.25] Hemos vencido
+[03:35.31] Ya lo sufrido
+[03:39.87] Este es un vínculo sin eras
+[03:45.61] Lo que tenemos
+[03:49.06] Nadie ha tenido
+[03:52.28] Eres testamento
+[03:55.79] Eres mi máquina
+[03:59.47] Del tiempo
+[04:03.26] 
