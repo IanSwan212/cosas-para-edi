@@ -29,15 +29,35 @@ const toSec = (s) => { const [m, sec] = s.split(":").map(Number); return (m || 0
 async function loadPhrases() {
   let txt = "";
   try { txt = await (await fetch("frases.txt", { cache: "no-cache" })).text(); } catch (e) {}
+  const lrc = []; // renglones en formato LRC: [mm:ss.xx] texto (tiempo desde el inicio de la canción)
+  let hasStart = false, hasEnd = false;
   for (const raw of txt.split(/\r?\n/)) {
     const l = raw.trim();
     if (!l || l.startsWith("#")) continue;
     let m = l.match(/^inicio\s+(\d+:\d{1,2})/i);
-    if (m) { clip.start = toSec(m[1]); continue; }
+    if (m) { clip.start = toSec(m[1]); hasStart = true; continue; }
     m = l.match(/^fin\s+(\d+:\d{1,2})/i);
-    if (m) { clip.end = toSec(m[1]); continue; }
+    if (m) { clip.end = toSec(m[1]); hasEnd = true; continue; }
+    // LRC: uno o varios tiempos entre corchetes al principio; las etiquetas como [ar:…] o [ti:…] se ignoran.
+    if (/^\[[a-z]+:/i.test(l)) continue;
+    m = l.match(/^((?:\[\d+:\d{1,2}(?:[.:]\d+)?\])+)\s*(.*)$/);
+    if (m) {
+      const text = m[2].trim();
+      for (const tag of m[1].match(/\d+:\d{1,2}(?:[.:]\d+)?/g)) {
+        const [mm, rest] = tag.split(/:(.*)/s);
+        lrc.push({ abs: Number(mm) * 60 + Number(rest.replace(":", ".")), text });
+      }
+      continue;
+    }
     m = l.match(/^(?:(\d+:\d{1,2}(?:\.\d+)?)\s+)?(.+?)\s*(?:\[\w+\])?$/); // la [carita] ya no se usa aquí
     if (m) lines.push({ t: m[1] ? toSec(m[1]) : null, text: m[2] });
+  }
+  if (lrc.length) {
+    lrc.sort((a, b) => a.abs - b.abs);
+    // Sin inicio o fin escritos, la parte va del primer renglón al último (con un respiro).
+    if (!hasStart) clip.start = Math.max(0, lrc[0].abs - 1.5);
+    if (!hasEnd) clip.end = lrc[lrc.length - 1].abs + 5;
+    for (const r of lrc) if (r.text && r.abs >= clip.start - 0.01 && r.abs < clip.end) lines.push({ t: r.abs - clip.start, text: r.text });
   }
   // Los renglones sin tiempo se reparten parejos entre sus vecinos con tiempo (o en toda la parte).
   const dur = Math.max(1, clip.end - clip.start);
