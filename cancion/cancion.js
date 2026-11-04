@@ -13,8 +13,14 @@ const pos = document.getElementById("pos");
 const hint = document.getElementById("hint");
 const dialog = document.getElementById("dialog");
 const pointer = document.getElementById("pointer");
-const audio = new Audio("assets/cancion.mp3");
+// La canción se carga completa en memoria: así se puede saltar a la parte elegida aunque el
+// servidor no permita pedir solo un pedazo del archivo (el servidor local de pruebas no lo permite).
+const audio = new Audio();
 audio.preload = "auto";
+const songReady = fetch("assets/cancion.mp3")
+  .then((r) => r.blob())
+  .then((b) => { audio.src = URL.createObjectURL(b); })
+  .catch(() => { audio.src = "assets/cancion.mp3"; });
 
 let clip = { start: 60, end: 105 };
 let lines = []; // { t, text }
@@ -181,9 +187,11 @@ function playEnding(since) {
 function start() {
   ended = false;
   hint.classList.add("gone");
-  audio.currentTime = clip.start;
   audio.volume = 0;
-  audio.play().then(() => { playing = true; }).catch(() => {});
+  songReady
+    .then(() => { audio.currentTime = clip.start; return audio.play(); })
+    .then(() => { playing = true; })
+    .catch((e) => console.warn("no se pudo reproducir:", e.name, e.message));
 }
 
 let last = performance.now(), clock = 0;
@@ -259,4 +267,4 @@ loadPhrases().then(() => {
 });
 
 // Para revisar desde la consola: muestra el segundo `sec` de la parte sin sonar.
-window.__cancion = { lines, clip, at: (sec) => { debugT = sec; }, rows: (sec) => (renderCode(sec, 0), code.querySelectorAll(".ln").length) };
+window.__cancion = { lines, clip, audio, state: () => ({ playing, ended, debugT }), at: (sec) => { debugT = sec; }, rows: (sec) => (renderCode(sec, 0), code.querySelectorAll(".ln").length) };
