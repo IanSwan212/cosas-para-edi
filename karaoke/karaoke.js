@@ -206,6 +206,60 @@ function drawStage(singing) {
   g.lineWidth = 1.7;
 }
 
+// ---------- La tele de la letra ----------
+// Una tele de garabato colgada sobre el escenario. Muestra el renglón que se canta: cada palabra
+// aparece cuando le toca y la que suena va subrayada. Si no hay renglón, solo una notita.
+
+function wrapWords(words, maxW) {
+  const rowsOut = [[]];
+  let w0 = 0;
+  for (const w of words) {
+    const ww = g.measureText(w.text + " ").width;
+    if (w0 + ww > maxW && rowsOut[rowsOut.length - 1].length) { rowsOut.push([]); w0 = 0; }
+    rowsOut[rowsOut.length - 1].push({ ...w, ww });
+    w0 += ww;
+  }
+  return rowsOut;
+}
+
+function drawTV(t) {
+  const x = 64, y = 15, w = 112, h = 44;
+  g.lineWidth = 1.4;
+  // Cables que la cuelgan de la cenefa.
+  line(x + 18, 8, x + 22, y, 700); line(x + w - 18, 8, x + w - 22, y, 701);
+  // Caja de la tele, pantalla con esquinas redondeadas y dos perillas.
+  g.fillStyle = "#fff"; g.fillRect(x, y, w, h); g.fillStyle = "#000";
+  line(x, y, x + w, y, 702); line(x + w, y, x + w, y + h, 708); line(x + w, y + h, x, y + h, 714); line(x, y + h, x, y, 720);
+  g.beginPath(); g.roundRect(x + 4, y + 4, w - 20, h - 8, 5); g.stroke();
+  circle(x + w - 8, y + 12, 2.2, 726); circle(x + w - 8, y + 21, 2.2, 727);
+  for (let k = 0; k < 3; k++) line(x + w - 11, y + 30 + k * 3, x + w - 5, y + 30 + k * 3, 728 + k);
+  g.lineWidth = 1.7;
+
+  const sx = x + 8, sw = w - 28, sy = y + 6, sh = h - 12;
+  const lines = track.lines;
+  const idx = track.started() ? lines.findIndex((l) => t >= l.t0 && t < l.t1) : -1;
+  if (idx < 0) { note(sx + sw / 2 - 2, sy + sh / 2 + 5, 740); return; }
+  // Letra a mano: lo más grande que quepa en la pantalla (hasta tres renglones).
+  let size = 11, rws;
+  for (; size >= 7; size--) {
+    g.font = `${size}px "Gochi Hand", cursive`;
+    rws = wrapWords(lines[idx].words, sw);
+    if (rws.length * (size + 1) <= sh) break;
+  }
+  const lh = size + 1, top = sy + (sh - rws.length * lh) / 2 + size - 1;
+  rws.forEach((row, r) => {
+    const rowW = row.reduce((a, wd) => a + wd.ww, 0);
+    let cx = sx + (sw - rowW) / 2;
+    for (const wd of row) {
+      if (t >= wd.t0) {
+        g.fillText(wd.text, cx, top + r * lh);
+        if (t < wd.t1) line(cx, top + r * lh + 2, cx + wd.ww - 3, top + r * lh + 2, 760 + r); // la que suena
+      }
+      cx += wd.ww;
+    }
+  });
+}
+
 // ---------- El muñequito cantando ----------
 
 function drawSinger(t, playing) {
@@ -271,6 +325,7 @@ function updateLyrics(t) {
   if (key !== shownLine) {
     shownLine = key;
     rows[1].innerHTML = "&nbsp;";
+    rows[0].classList.toggle("note", !lines.length);
     if (!lines.length) {
       rows[0].innerHTML = "falta la letra";
       rows[1].innerHTML = `pégala en karaoke/${def.letra}`;
@@ -295,8 +350,9 @@ function render(t, playing) {
   g.strokeStyle = g.fillStyle = "#000";
   g.lineCap = g.lineJoin = "round";
   drawStage(track.started() && !track.ended());
+  drawTV(Math.max(0, t));
   drawSinger(Math.max(0, t), playing);
-  if (track.started() && track.ended()) { g.font = '15px "Gochi Hand", cursive'; g.fillText("¡gracias!", 140, 50); }
+  if (track.started() && track.ended()) { g.font = '15px "Gochi Hand", cursive'; g.fillText("¡gracias!", 150, 80); }
   const img = g.getImageData(0, 0, W, H), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
     const c = d[i] < 150 ? [17, 17, 17] : [239, 237, 232];
