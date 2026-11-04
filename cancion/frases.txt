@@ -1,0 +1,21 @@
+# Lo que el muñequito escribe a mano mientras suena la canción.
+# Las líneas que empiezan con # no se usan; puedes borrarlas o dejarlas.
+#
+# 1) Qué parte de la canción suena (minuto:segundo de la canción completa).
+inicio 1:00
+fin 1:45
+#
+# 2) Un renglón por frase: el tiempo (contado desde el inicio de la parte de arriba)
+#    y lo que escribe. Al final puedes poner una carita entre corchetes:
+#    [feliz] [triste] [llora] [amor] [sorpresa]   (si no pones nada, va feliz)
+#
+# Estas frases son ejemplos: bórralas y escribe las tuyas.
+0:01 sin ti [triste]
+0:05 no sale el sol [triste]
+0:10 mis días no tienen color [llora]
+0:16 pero pienso en ti [sorpresa]
+0:21 y todo se ilumina [feliz]
+0:27 eres mi lugar favorito [amor]
+0:33 vuelve pronto [triste]
+0:38 te espero aquí [feliz]
+0:42 te amo [amor]
