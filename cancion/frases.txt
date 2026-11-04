@@ -10,12 +10,55 @@ fin 1:45
 #    [feliz] [triste] [llora] [amor] [sorpresa]   (si no pones nada, va feliz)
 #
 # Estas frases son ejemplos: bórralas y escribe las tuyas.
-0:01 sin ti [triste]
-0:05 no sale el sol [triste]
-0:10 mis días no tienen color [llora]
-0:16 pero pienso en ti [sorpresa]
-0:21 y todo se ilumina [feliz]
-0:27 eres mi lugar favorito [amor]
-0:33 vuelve pronto [triste]
-0:38 te espero aquí [feliz]
-0:42 te amo [amor]
+[00:15.22] const sentimiento = "Yo no tengo nada que me haga sonreír";
+[00:22.59] let felicidad = "Nadie que me abrace fuerte y me haga feliz";
+[00:29.83] if (!tengoNada) { "No tengo nada que hacer, no tengo por qué vivir"; }
+[00:37.45] return { mensaje: "No tengo nada de nada, si no te tengo a ti" };
+[00:44.94] console.log("Solo quiero que estés cerca de mí");
+
+[00:52.68] const pensamientos = "Yo no tengo nadie sobre quien escribir";
+[01:00.03] // Nadie que se enfade, nadie con quien discutir
+[01:07.12] while (!alguien) { "No tengo a nadie con quien intentar sobrevivir"; }
+[01:14.94] let recuerdos = "No tengo con quien bailar descalzos por Madrid";
+[01:21.31] if (yo !== tu) {
+[01:25.28]     if (!cerca_de_mi) {
+[01:29.37]         console.log("Si no me besas ni abrazas");
+[01:32.62]         return "¿Qué será de mí sin ti?";
+[01:36.33]     }
+[01:40.32]     console.log("¿Para qué quiero vivir?");
+[01:43.81] }
+[01:49.22] 
+
+[02:01.99] while (yo_no_te_tengo_a_ti) { "Si yo no te tengo a ti, ¿para qué seguir?"; }
+[02:09.01] const pregunta = "¿Para qué escribir canciones? ¿A quién quiero mentir?";
+[02:16.83] let palabras = ["te quiero", "no lloraré"];
+[02:24.07] // ¿Para qué todas esas lágrimas que caen sobre un papel?
+[02:30.86] if (!tu) {
+[02:34.53]     console.log("Si no estás cerca de mí");
+[02:38.83]     console.log("Si no me besas ni abrazas");
+[02:42.28]     return "¿Qué será de mí sin ti?";
+[02:45.99] }
+[02:49.60] console.log("¿Para qué quiero vivir?");
+[02:53.24] return "Si yo no te tengo a ti";
+[02:58.43]
+
+[03:10.06] /* Si yo no te tengo a ti */
+[03:13.96] /* Si yo no te tengo a ti */
+[03:17.69] /* Si yo no te tengo a ti */
+[03:21.32] /* Si yo no te tengo a ti */
+[03:25.08] const condicion = "Si yo no te tengo a ti";
+[03:29.08] console.log("¿Para qué quiero vivir?");
+[03:32.56] return condicion;
+[03:37.63]
+
+[03:50.13] const sonido = "Shalalá-rara-rararara-lala-rala";
+[03:57.03] // Si yo no te tengo a ti
+[04:00.94] // Si yo no te tengo a ti
+[04:05.17] console.log("Shalalá-rara-rararara-lala-rala");
+[04:11.75] // Si yo no te tengo a ti
+[04:15.49] // Si yo no te tengo a ti
+[04:19.48] return "Uh-uh";
+
+[04:27.14] console.log("Si yo no te tengo a ti");
+[04:30.86] // Si yo no te tengo a ti
+[04:32.17]
