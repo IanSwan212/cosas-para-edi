@@ -165,8 +165,9 @@ function moveCamera(line, t, dt) {
   camZ += (zoom - camZ) * k;
   const rx = 6 + 2 * Math.sin(t * 0.27), ry = 1.2 * Math.sin(t * 0.21), rz = -1.2 + 0.8 * Math.sin(t * 0.31);
   cam.style.transform = `scale(${camZ}) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) translate(${-camX}px, ${-camY}px)`;
-  const moving = t - lastMove < 0.45;
-  cam.style.filter = moving ? "blur(2.2px)" : "blur(0px)";
+  // Desenfoque suave: depende de qué tan rápido se mueve la cámara, apenas un poco y sin brincos.
+  const speed = Math.abs(ty - camY) / 120;
+  cam.style.filter = `blur(${Math.min(0.8, speed * 0.8).toFixed(2)}px)`;
 }
 
 // ---------- Final: «¿borrar todo?» → Cancelar ----------
