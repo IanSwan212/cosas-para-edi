@@ -3,27 +3,72 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0c0c10" />
-  <title>te extraño...</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap" />
+  <meta name="theme-color" content="#0b0c10" />
+  <title>cancion.js</title>
   <style>
-    html, body { margin: 0; min-height: 100%; background: #0c0c10; overflow: hidden; }
-    body { display: grid; place-items: center; min-height: 100vh; min-height: 100dvh; }
-    .window { width: min(88vw, 72vh, 480px); background: #efede8; border-radius: 10px; overflow: hidden;
-      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06); transform: rotate(-1.5deg); }
-    .bar { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: #e3e1dc; border-bottom: 1px solid #cfccc6; }
-    .dot { width: 11px; height: 11px; border-radius: 50%; }
-    .bar span { flex: 1; text-align: center; margin-right: 50px; font: 12px ui-sans-serif, system-ui, sans-serif; color: #555; }
-    canvas { display: block; width: 100%; aspect-ratio: 180 / 150; image-rendering: pixelated; image-rendering: crisp-edges; cursor: pointer; }
+    :root { --bg: #0d0f14; --line: #2a2f3a; --txt: #c9d1e0; --dim: #5b6475; --red: #ff4d6d; --yel: #ffc857; --blu: #7aa2ff;
+      --pur: #c792ea; --grn: #9ece6a; --org: #ff9e64; --pink: #ff7eb6; }
+    html, body { margin: 0; height: 100%; background: #07080b; overflow: hidden; }
+    body { font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, ui-monospace, monospace; cursor: pointer; }
+    /* La "cámara": el editor se ve de cerca, inclinado, y se desliza siguiendo lo que se escribe. */
+    .scene { position: fixed; inset: 0; perspective: 900px; overflow: hidden; }
+    .cam { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; transition: filter 0.25s ease; will-change: transform, filter; }
+    .editor { position: relative; width: 1100px; background: var(--bg); border-radius: 12px; box-shadow: 0 30px 120px rgba(0, 0, 0, 0.7), 0 0 0 1px #1b1f29; overflow: hidden; }
+    .tabs { display: flex; gap: 0; background: #0a0c10; border-bottom: 1px solid var(--line); font-size: 15px; color: var(--dim); }
+    .tab { padding: 10px 18px; border-right: 1px solid var(--line); }
+    .tab.on { color: var(--txt); background: var(--bg); box-shadow: inset 0 2px 0 var(--blu); }
+    .crumbs { padding: 6px 18px; font-size: 13px; color: var(--dim); }
+    .code { padding: 14px 0 40px; font-size: 30px; line-height: 1.6; min-height: 900px; }
+    .ln { display: flex; white-space: pre; }
+    .num { width: 70px; flex: none; text-align: right; padding-right: 26px; color: #39404f; user-select: none; }
+    .ln.cur { background: rgba(122, 162, 255, 0.06); }
+    .ln.cur .num { color: #8892a6; }
+    .t-kw { color: var(--pur); } .t-fn { color: var(--yel); } .t-prop { color: var(--blu); } .t-str { color: var(--grn); }
+    .t-num { color: var(--org); } .t-com { color: #6b7385; font-style: italic; } .t-me { color: var(--red); } .t-you { color: var(--pink); }
+    .t-p { color: #8b93a7; }
+    .caret { display: inline-block; width: 0.55em; height: 1.15em; vertical-align: -0.2em; background: var(--red); position: relative; animation: blink 1s steps(1) infinite; }
+    .caret.typing { animation: none; }
+    @keyframes blink { 50% { opacity: 0; } }
+    /* Etiqueta de quién escribe, como la de un editor compartido: la carita del muñequito. */
+    .who { position: absolute; left: 0.6em; top: -1.25em; display: flex; align-items: center; gap: 4px; padding: 1px 6px 1px 3px;
+      background: var(--yel); color: #1a1a1a; font: 700 15px ui-sans-serif, system-ui, sans-serif; border-radius: 4px 4px 4px 0; white-space: nowrap; }
+    .who::after { content: ""; position: absolute; left: -2px; bottom: -0.95em; width: 2px; height: 1em; background: var(--yel); }
+    .who svg { width: 18px; height: 18px; }
+    .status { display: flex; justify-content: space-between; padding: 6px 18px; font-size: 13px; color: var(--dim); border-top: 1px solid var(--line); background: #0a0c10; }
+    /* Aviso del final. */
+    .dialog { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%) scale(0.96); opacity: 0; pointer-events: none;
+      width: 520px; background: #141821; border: 1px solid #2b3140; border-radius: 12px; padding: 24px; color: var(--txt);
+      font: 22px ui-sans-serif, system-ui, sans-serif; box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6); transition: opacity 0.3s, transform 0.3s; }
+    .dialog.on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .dialog small { display: block; margin: 6px 0 18px; color: var(--dim); font-size: 16px; }
+    .dialog .btns { display: flex; justify-content: flex-end; gap: 12px; }
+    .dialog span { padding: 8px 18px; border-radius: 8px; background: #232937; }
+    .dialog span.del { background: var(--red); color: #fff; }
+    .dialog span.hit { outline: 2px solid var(--blu); }
+    .pointer { position: absolute; width: 26px; height: 26px; transition: left 0.9s ease, top 0.9s ease; opacity: 0; }
+    .hint { position: fixed; left: 0; right: 0; bottom: 24px; text-align: center; color: rgba(200, 210, 230, 0.6);
+      font: 16px ui-sans-serif, system-ui, sans-serif; transition: opacity 0.6s; }
+    .hint.gone { opacity: 0; }
+    .vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.75) 100%); }
   </style>
 </head>
 <body>
-  <div class="window">
-    <div class="bar"><i class="dot" style="background:#ff5f57"></i><i class="dot" style="background:#febc2e"></i><i class="dot" style="background:#28c840"></i><span>te extraño...</span></div>
-    <canvas id="doodle" width="180" height="150" role="img" aria-label="Un muñequito dibujado a mano que escribe frases mientras suena una canción"></canvas>
+  <div class="scene">
+    <div class="cam" id="cam">
+      <div class="editor" id="editor">
+        <div class="tabs"><div class="tab on">cancion.js</div><div class="tab">nosotros.js</div><div class="tab">extrañar.ts</div></div>
+        <div class="crumbs">src › cancion.js</div>
+        <div class="code" id="code"></div>
+        <div class="status"><span>JavaScript</span><span id="pos">Ln 1, Col 1</span><span>UTF-8</span></div>
+        <div class="dialog" id="dialog">¿Borrar todo?<small>Esto no se puede deshacer.</small>
+          <div class="btns"><span id="cancel">Cancelar</span><span class="del">Borrar</span></div>
+          <svg class="pointer" id="pointer" viewBox="0 0 24 24"><path d="M4 2l15 11-7 1 4 8-3 1-4-8-5 5z" fill="#fff" stroke="#111" stroke-width="1.2"/></svg>
+        </div>
+      </div>
+    </div>
   </div>
+  <div class="vignette"></div>
+  <p id="hint" class="hint">toca para empezar</p>
   <script type="module" src="cancion.js"></script>
 </body>
 </html>

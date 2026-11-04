@@ -1,16 +1,26 @@
-// El muñequito escribe a mano, frase por frase, mientras suena una parte de la canción,
-// como en la ventanita del video. Qué parte suena y qué escribe sale de frases.txt, para
-// poder cambiarlo sin tocar el código. Dibujo a 1 bit con trazos que tiemblan.
+// Un editor de código donde el muñequito teclea, renglón por renglón, lo que dice frases.txt
+// mientras suena una parte de la canción, como en el video del editor. La "cámara" mira muy de
+// cerca el renglón que se escribe, inclinada, y se desliza con un leve desenfoque. Al final sale
+// el aviso de «¿borrar todo?», se elige «Cancelar» y queda «// sigo aquí.».
+//
+// frases.txt: «inicio m:ss», «fin m:ss» y un renglón por frase, con o sin tiempo
+// («0:05 texto»). Si no tienen tiempo se reparten solos. Con cancion/?marcar se toman los
+// tiempos tocando al ritmo de la canción.
 
-const W = 180, H = 150, FPS = 12, TAU = Math.PI * 2;
-const canvas = document.getElementById("doodle");
-const g = canvas.getContext("2d", { willReadFrequently: true });
+const code = document.getElementById("code");
+const cam = document.getElementById("cam");
+const pos = document.getElementById("pos");
+const hint = document.getElementById("hint");
+const dialog = document.getElementById("dialog");
+const pointer = document.getElementById("pointer");
 const audio = new Audio("assets/cancion.mp3");
 audio.preload = "auto";
 
 let clip = { start: 60, end: 105 };
-let lines = []; // { t, text, face }
-let playing = false, done = false;
+let lines = []; // { t, text }
+let playing = false, ended = false, endAt = 0;
+let debugT = null; // para revisar un momento fijo desde la consola
+const OUTRO = "// sigo aquí.";
 
 // ---------- frases.txt ----------
 
@@ -26,9 +36,8 @@ async function loadPhrases() {
     if (m) { clip.start = toSec(m[1]); continue; }
     m = l.match(/^fin\s+(\d+:\d{1,2})/i);
     if (m) { clip.end = toSec(m[1]); continue; }
-    // Renglón con tiempo («0:05 texto [carita]») o sin tiempo («texto [carita]»).
-    m = l.match(/^(?:(\d+:\d{1,2}(?:\.\d+)?)\s+)?(.+?)\s*(?:\[(\w+)\])?$/);
-    if (m) lines.push({ t: m[1] ? toSec(m[1]) : null, text: m[2], face: (m[3] || "feliz").toLowerCase() });
+    m = l.match(/^(?:(\d+:\d{1,2}(?:\.\d+)?)\s+)?(.+?)\s*(?:\[\w+\])?$/); // la [carita] ya no se usa aquí
+    if (m) lines.push({ t: m[1] ? toSec(m[1]) : null, text: m[2] });
   }
   // Los renglones sin tiempo se reparten parejos entre sus vecinos con tiempo (o en toda la parte).
   const dur = Math.max(1, clip.end - clip.start);
@@ -36,190 +45,180 @@ async function loadPhrases() {
     if (lines[i].t !== null) continue;
     let j = i;
     while (j < lines.length && lines[j].t === null) j++;
-    const a = i > 0 ? lines[i - 1].t : 0.5, b = j < lines.length ? lines[j].t : dur - 2;
-    for (let k = i; k < j; k++) lines[k].t = a + ((b - a) * (k - i + (i > 0 ? 1 : 0))) / (j - i + (i > 0 ? 1 : 0));
+    const a = i > 0 ? lines[i - 1].t : 0.5, b = j < lines.length ? lines[j].t : dur - 3;
+    const off = i > 0 ? 1 : 0;
+    for (let k = i; k < j; k++) lines[k].t = a + ((b - a) * (k - i + off)) / (j - i + off);
     i = j - 1;
   }
   lines.sort((a, b) => a.t - b.t);
 }
 
-// ---------- Trazos de garabato ----------
+// ---------- Colores de código (para lo que se escriba, sea código o no) ----------
 
-let boil = 0;
-function hash(n) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
-const wob = (i, amp = 0.6) => (hash(i + boil * 17.3) - 0.5) * 2 * amp;
-function circle(cx, cy, r, id, fill = false) {
-  const n = Math.max(10, Math.round(r * 1.8));
-  g.beginPath();
-  for (let k = 0; k <= n; k++) {
-    const a = (k / n) * TAU, rr = r + wob(id * 31 + (k % n), Math.min(0.7, r * 0.08 + 0.25));
-    k ? g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr) : g.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+const KW = new Set(["const", "let", "var", "if", "else", "while", "for", "return", "function", "new", "true", "false", "null", "await", "async", "import", "from", "export", "class", "do"]);
+const ME = new Set(["i", "yo", "me", "mi", "mí", "we", "nosotros", "us"]);
+const YOU = new Set(["you", "tú", "tu", "ti", "te", "edi"]);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+function highlight(src) {
+  if (/^\s*\/\//.test(src)) return `<span class="t-com">${esc(src)}</span>`;
+  let out = "", i = 0;
+  while (i < src.length) {
+    const rest = src.slice(i);
+    let m;
+    if ((m = rest.match(/^"[^"]*"?|^'[^']*'?/))) { out += `<span class="t-str">${esc(m[0])}</span>`; i += m[0].length; continue; }
+    if ((m = rest.match(/^\d+(\.\d+)?/))) { out += `<span class="t-num">${m[0]}</span>`; i += m[0].length; continue; }
+    if ((m = rest.match(/^[\p{L}_$][\p{L}\p{N}_$]*/u))) {
+      const w = m[0], lw = w.toLowerCase(), prev = src[i - 1], next = src[i + w.length];
+      const cls = KW.has(lw) ? "t-kw" : ME.has(lw) ? "t-me" : YOU.has(lw) ? "t-you" : next === "(" ? "t-fn" : prev === "." ? "t-prop" : "";
+      out += cls ? `<span class="${cls}">${esc(w)}</span>` : esc(w);
+      i += w.length; continue;
+    }
+    if (/[().,;{}\[\]=+\-*/<>!:]/.test(src[i])) { out += `<span class="t-p">${esc(src[i])}</span>`; i++; continue; }
+    out += esc(src[i]); i++;
   }
-  g.closePath();
-  fill ? g.fill() : g.stroke();
+  return out;
 }
-function line(x1, y1, x2, y2, id) {
-  g.beginPath();
-  g.moveTo(x1 + wob(id), y1 + wob(id + 1));
-  g.quadraticCurveTo((x1 + x2) / 2 + wob(id + 2, 0.8), (y1 + y2) / 2 + wob(id + 3, 0.8), x2 + wob(id + 4), y2 + wob(id + 5));
-  g.stroke();
+
+// ---------- Tecleo ----------
+
+const FACE = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#fff" stroke="#111" stroke-width="1.6"/>
+  <circle cx="9" cy="10" r="1.2" fill="#111"/><circle cx="15" cy="10" r="1.2" fill="#111"/><path d="M8.5 14q3.5 3 7 0" fill="none" stroke="#111" stroke-width="1.4" stroke-linecap="round"/></svg>`;
+
+// Cuántos caracteres del renglón i se ven en el segundo t de la parte.
+function typed(i, t) {
+  const l = lines[i];
+  if (t < l.t) return 0;
+  const gap = (i + 1 < lines.length ? lines[i + 1].t : l.t + 3) - l.t;
+  const cps = Math.max(9, Math.min(28, l.text.length / Math.max(0.6, gap * 0.75)));
+  return Math.min(l.text.length, Math.floor((t - l.t) * cps) + 1);
 }
-function arc(cx, cy, r, a0, a1, id) {
-  g.beginPath();
-  for (let k = 0; k <= 10; k++) {
-    const a = a0 + ((a1 - a0) * k) / 10, rr = r + wob(id * 7 + k, 0.35);
-    k ? g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr) : g.moveTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+
+let lastHtml = "", curLine = -1;
+function renderCode(t, outro) {
+  const rows = [];
+  let cur = -1, curCol = 0, typing = false;
+  lines.forEach((l, i) => {
+    const n = typed(i, t);
+    if (n > 0) { cur = i; curCol = n; typing = n < l.text.length; rows.push(l.text.slice(0, n)); }
+  });
+  if (outro > 0) { rows.push(""); rows.push(OUTRO.slice(0, outro)); cur = rows.length - 1; curCol = outro; typing = outro < OUTRO.length; }
+  if (!rows.length) rows.push("");
+  const html = rows.map((r, i) => {
+    const caret = i === Math.max(cur, 0) ? `<span class="caret${typing ? " typing" : ""}"><span class="who">${FACE}yo</span></span>` : "";
+    return `<div class="ln${i === cur ? " cur" : ""}"><span class="num">${i + 1}</span><span>${highlight(r)}${caret}</span></div>`;
+  }).join("");
+  if (html !== lastHtml) { code.innerHTML = html; lastHtml = html; }
+  pos.textContent = `Ln ${Math.max(cur, 0) + 1}, Col ${curCol + 1}`;
+  return Math.max(cur, 0);
+}
+
+// ---------- Cámara ----------
+// Sigue al cursor muy de cerca, con un leve giro en 3D; cuando cambia de renglón se desliza
+// y se desenfoca un instante, como la cámara en mano del video.
+
+let camX = 0, camY = 0, camZ = 1.6, lastMove = -10;
+function moveCamera(line, t, dt) {
+  const caret = code.querySelector(".caret");
+  const editor = document.getElementById("editor");
+  let tx = 300, ty = 120;
+  if (caret) {
+    // Posición del cursor dentro del editor, sin contar la cámara (offsets de maquetación).
+    tx = 0; ty = 0;
+    for (let el = caret; el && el !== editor; el = el.offsetParent) { tx += el.offsetLeft; ty += el.offsetTop; }
   }
-  g.stroke();
-}
-function heart(cx, cy, s, id) {
-  g.beginPath();
-  for (let k = 0; k <= 24; k++) {
-    const a = (k / 24) * TAU;
-    const x = 16 * Math.sin(a) ** 3, y = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
-    k ? g.lineTo(cx + (x / 16) * s, cy - (y / 16) * s) : g.moveTo(cx + (x / 16) * s, cy - (y / 16) * s);
-  }
-  g.closePath();
-  g.stroke();
-}
-
-// ---------- El muñequito ----------
-
-function drawFace(face, t) {
-  const cx = 58, cy = 80 + Math.sin(t * 2.2) * 1.2, R = 17;
-  g.lineWidth = 1.6;
-  circle(cx, cy, R, 1);
-  const blink = (t % 3.4) < 0.13;
-  for (const s of [-1, 1]) {
-    const x = cx + s * 6.5, y = cy - 4;
-    if (face === "amor" || face === "feliz" && blink) arc(x, y + 1.5, 2.4, Math.PI * 1.15, Math.PI * 1.85, 30 + s);
-    else if (face === "llora" || face === "triste") { circle(x, y + 1, 1.3, 10 + s, true); line(x - 3 * s, y - 4, x + 2 * s, y - 2.5, 65 + s); }
-    else if (face === "sorpresa") circle(x, y, 2, 12 + s);
-    else circle(x, y, 1.4, 10 + s, true);
-  }
-  const my = cy + 7;
-  if (face === "feliz" || face === "amor") arc(cx, my - 3, 4.5, Math.PI * 0.15, Math.PI * 0.85, 83);
-  else if (face === "sorpresa") circle(cx, my, 2.6, 84);
-  else arc(cx, my + 4, 4, Math.PI * 1.2, Math.PI * 1.8, 86);
-  if (face === "llora") for (const s of [-1, 1]) { const k = (t * 1.5 + (s > 0 ? 0.5 : 0)) % 1; circle(cx + s * 7, cy + k * 10, 1, 90 + s, true); }
-  if (face === "amor") for (const s of [-1, 1]) for (let k = 0; k < 3; k++) line(cx + s * 12 - 2 + k * 1.6, cy + 3, cx + s * 12 - 3 + k * 1.6, cy + 5.5, 95 + k + s * 5);
-  // Manitas: con una escribe (se mueve mientras salen las palabras).
-  circle(cx - 24, cy + 12, 3.8, 100);
-  const writing = playing && current() && t - current().t < current().text.split(" ").length * 0.35;
-  circle(cx + 25 + (writing ? Math.sin(t * 20) * 1.5 : 0), cy + 10 + (writing ? Math.cos(t * 17) : 0), 3.8, 101);
-  if (face === "amor") heart(cx + 4, cy - R - 9 - (t % 1.2) * 6, 3, 120);
+  if (line !== curLine) { curLine = line; lastMove = t; }
+  const k = 1 - Math.exp(-dt * 3.2);
+  // El cursor queda un poco a la derecha del centro: se ve lo recién escrito a su izquierda.
+  camX += (tx - (window.innerWidth * 0.12) / camZ - camX) * k;
+  camY += (ty - camY) * k;
+  const zoom = 1.6 + 0.15 * Math.sin(t * 0.35);
+  camZ += (zoom - camZ) * k;
+  const rx = 8 + 3 * Math.sin(t * 0.27), ry = -14 + 6 * Math.sin(t * 0.21), rz = -3 + 1.5 * Math.sin(t * 0.31);
+  cam.style.transform = `scale(${camZ}) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) translate(${-camX}px, ${-camY}px)`;
+  const moving = t - lastMove < 0.45;
+  cam.style.filter = moving ? "blur(2.2px)" : "blur(0px)";
 }
 
-// ---------- Lo que escribe ----------
+// ---------- Final: «¿borrar todo?» → Cancelar ----------
 
-const songTime = () => (playing || done ? audio.currentTime - clip.start : 0);
-function current() {
-  const t = songTime();
-  let cur = null;
-  for (const l of lines) if (t >= l.t) cur = l;
-  return cur;
+function playEnding(since) {
+  dialog.classList.toggle("on", since > 0.8 && since < 4.6);
+  const cancel = document.getElementById("cancel");
+  if (since > 1.2 && since < 4.6) {
+    pointer.style.opacity = 1;
+    const go = since > 1.8;
+    pointer.style.left = go ? `${cancel.offsetLeft + 30}px` : "430px";
+    pointer.style.top = go ? `${cancel.offsetTop + 16}px` : "150px";
+  } else pointer.style.opacity = 0;
+  cancel.classList.toggle("hit", since > 3 && since < 4.6);
+  const outro = since > 4.8 ? Math.min(OUTRO.length, Math.floor((since - 4.8) * 10) + 1) : 0;
+  return outro;
 }
 
-function drawWords(t) {
-  const cur = current();
-  if (!cur) return;
-  const words = cur.text.split(" ");
-  const shown = Math.floor((t - cur.t) / 0.35) + 1;
-  // Letra grande para las frases cortas, como en el video; más chica si es larga.
-  const size = cur.text.length > 22 ? 11 : cur.text.length > 12 ? 13 : 16;
-  g.font = `${size}px "Gochi Hand", cursive`;
-  let x = 88, y = 58;
-  for (let i = 0; i < Math.min(shown, words.length); i++) {
-    const w = words[i], ww = g.measureText(w + " ").width;
-    if (x + ww > 176 && x > 88) { x = 88; y += size + 2; }
-    g.fillText(w, x + wob(300 + i, 0.4), y + wob(320 + i, 0.4));
-    x += ww;
-  }
-}
-
-// ---------- Cuadro completo ----------
-
-function render(t) {
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
-  g.strokeStyle = g.fillStyle = "#000";
-  g.lineCap = g.lineJoin = "round";
-  const cur = current();
-  drawFace(cur ? cur.face : "feliz", t);
-  if (!playing && !done) {
-    g.font = '13px "Gochi Hand", cursive';
-    g.fillText("tócame", 92, 62);
-    g.fillText("para escuchar", 92, 76);
-  } else drawWords(songTime());
-  const img = g.getImageData(0, 0, W, H), d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const c = d[i] < 150 ? [17, 17, 17] : [239, 237, 232];
-    d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-}
-
-// ---------- Reproducción: solo la parte elegida, con entrada y salida suaves ----------
+// ---------- Reproducción ----------
 
 function start() {
-  done = false;
+  ended = false;
+  hint.classList.add("gone");
   audio.currentTime = clip.start;
   audio.volume = 0;
   audio.play().then(() => { playing = true; }).catch(() => {});
 }
-canvas.addEventListener("click", () => { if (playing) { audio.pause(); playing = false; } else start(); });
 
-let clock = 0, last = performance.now(), lastFrame = -1;
+let last = performance.now(), clock = 0;
 function loop(now) {
-  clock += (now - last) / 1000;
+  const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
+  clock += dt;
+  let t = 0, outro = 0;
   if (playing) {
     const p = audio.currentTime;
-    const fade = Math.min(1, (p - clip.start) / 1.2, (clip.end - p) / 2.5);
-    audio.volume = Math.max(0, Math.min(1, fade)) * 0.8;
-    if (p >= clip.end) { audio.pause(); playing = false; done = true; }
+    audio.volume = Math.max(0, Math.min(1, (p - clip.start) / 1.2, (clip.end - p) / 2.5)) * 0.85;
+    t = p - clip.start;
+    if (p >= clip.end) { audio.pause(); playing = false; ended = true; endAt = clock; }
   }
-  const f = Math.floor(clock * FPS);
-  if (f !== lastFrame) { lastFrame = f; boil = Math.floor(f / 2); render(clock); }
+  if (ended) { t = clip.end - clip.start; outro = playEnding(clock - endAt); }
+  if (debugT !== null) t = debugT;
+  const line = renderCode(t, outro);
+  moveCamera(line, clock, dt);
   requestAnimationFrame(loop);
 }
 
+document.addEventListener("click", () => { if (!playing && !MARK) start(); });
+
 // ---------- Modo para marcar tiempos (cancion/?marcar) ----------
-// Suena la parte elegida y cada toque (o la barra espaciadora) marca cuándo empieza el
-// siguiente renglón de frases.txt. Al final arma el archivo con los tiempos para copiarlo.
 
 const MARK = new URLSearchParams(location.search).has("marcar");
 const fmt = (s) => { const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r < 10 ? "0" : ""}${r.toFixed(1)}`; };
 
 function setupMarking() {
   const css = document.createElement("style");
-  css.textContent = `.mark { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(92vw, 560px);
-    font: 15px ui-sans-serif, system-ui, sans-serif; color: #eee; background: rgba(20, 20, 26, 0.92); border-radius: 10px; padding: 12px 14px; }
+  css.textContent = `.mark { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(92vw, 560px); z-index: 5;
+    font: 15px ui-sans-serif, system-ui, sans-serif; color: #eee; background: rgba(20, 20, 26, 0.94); border-radius: 10px; padding: 12px 14px; cursor: pointer; }
     .mark b { color: #ff9ac0; } .mark textarea { width: 100%; height: 40vh; margin-top: 8px; font: 13px ui-monospace, monospace; }
     .mark button { margin-top: 8px; font: inherit; padding: 6px 14px; border-radius: 8px; border: 0; cursor: pointer; }`;
   document.head.appendChild(css);
+  hint.classList.add("gone");
   const box = document.createElement("div");
   box.className = "mark";
   document.body.appendChild(box);
   let next = 0, started = false;
   const marks = [];
   const show = () => {
-    box.innerHTML = !started
-      ? "Modo para marcar tiempos: toca aquí o la barra espaciadora para empezar la canción."
-      : next < lines.length
-        ? `Toca cuando empiece: <b>${lines[next].text.replace(/</g, "&lt;")}</b> (${next + 1} de ${lines.length})`
-        : "Listo.";
+    box.innerHTML = !started ? "Modo para marcar tiempos: toca aquí o la barra espaciadora para empezar la canción."
+      : `Toca cuando empiece: <b>${esc(lines[next].text)}</b> (${next + 1} de ${lines.length})`;
   };
   const finish = () => {
-    audio.pause(); playing = false;
+    audio.pause(); playing = false; next = lines.length;
     const out = [`inicio ${fmt(clip.start).replace(/\.\d$/, "")}`, `fin ${fmt(clip.end).replace(/\.\d$/, "")}`]
-      .concat(lines.map((l, i) => `${fmt(marks[i] ?? l.t)} ${l.text} [${l.face}]`)).join("\n");
+      .concat(lines.map((l, i) => `${fmt(marks[i] ?? l.t)} ${l.text}`)).join("\n");
     box.innerHTML = "Copia esto y pégalo en frases.txt en lugar de lo que tenía:";
     const ta = document.createElement("textarea");
     ta.value = out;
     const copy = document.createElement("button");
     copy.textContent = "copiar";
-    copy.onclick = () => { ta.select(); navigator.clipboard?.writeText(out).catch(() => {}); copy.textContent = "copiado"; };
+    copy.onclick = (e) => { e.stopPropagation(); ta.select(); navigator.clipboard?.writeText(out).catch(() => {}); copy.textContent = "copiado"; };
     box.append(ta, copy);
   };
   const tap = () => {
@@ -229,16 +228,15 @@ function setupMarking() {
     next >= lines.length ? finish() : show();
   };
   window.addEventListener("keydown", (e) => { if (e.code === "Space") { e.preventDefault(); tap(); } });
-  canvas.addEventListener("click", (e) => { e.stopImmediatePropagation(); tap(); }, true);
-  box.addEventListener("click", () => { if (next < lines.length) tap(); });
+  box.addEventListener("click", tap);
   audio.addEventListener("pause", () => { if (started && next < lines.length && audio.currentTime >= clip.end - 0.1) finish(); });
   show();
 }
 
-Promise.all([loadPhrases(), document.fonts.load('15px "Gochi Hand"').catch(() => {})]).then(() => {
+loadPhrases().then(() => {
   if (MARK) setupMarking();
   requestAnimationFrame(loop);
 });
 
-// Para revisar desde la consola: dibuja el segundo `sec` de la parte sin sonar.
-window.__cancion = { lines, clip, at: (sec) => { done = true; Object.defineProperty(audio, "currentTime", { value: clip.start + sec, configurable: true, writable: true }); render(clock); } };
+// Para revisar desde la consola: muestra el segundo `sec` de la parte sin sonar.
+window.__cancion = { lines, clip, at: (sec) => { debugT = sec; } };
