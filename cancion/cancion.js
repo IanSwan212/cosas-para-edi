@@ -26,8 +26,19 @@ async function loadPhrases() {
     if (m) { clip.start = toSec(m[1]); continue; }
     m = l.match(/^fin\s+(\d+:\d{1,2})/i);
     if (m) { clip.end = toSec(m[1]); continue; }
-    m = l.match(/^(\d+:\d{1,2}(?:\.\d+)?)\s+(.+?)\s*(?:\[(\w+)\])?$/);
-    if (m) lines.push({ t: toSec(m[1]), text: m[2], face: (m[3] || "feliz").toLowerCase() });
+    // Renglón con tiempo («0:05 texto [carita]») o sin tiempo («texto [carita]»).
+    m = l.match(/^(?:(\d+:\d{1,2}(?:\.\d+)?)\s+)?(.+?)\s*(?:\[(\w+)\])?$/);
+    if (m) lines.push({ t: m[1] ? toSec(m[1]) : null, text: m[2], face: (m[3] || "feliz").toLowerCase() });
+  }
+  // Los renglones sin tiempo se reparten parejos entre sus vecinos con tiempo (o en toda la parte).
+  const dur = Math.max(1, clip.end - clip.start);
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].t !== null) continue;
+    let j = i;
+    while (j < lines.length && lines[j].t === null) j++;
+    const a = i > 0 ? lines[i - 1].t : 0.5, b = j < lines.length ? lines[j].t : dur - 2;
+    for (let k = i; k < j; k++) lines[k].t = a + ((b - a) * (k - i + (i > 0 ? 1 : 0))) / (j - i + (i > 0 ? 1 : 0));
+    i = j - 1;
   }
   lines.sort((a, b) => a.t - b.t);
 }
@@ -173,7 +184,61 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-Promise.all([loadPhrases(), document.fonts.load('15px "Gochi Hand"').catch(() => {})]).then(() => requestAnimationFrame(loop));
+// ---------- Modo para marcar tiempos (cancion/?marcar) ----------
+// Suena la parte elegida y cada toque (o la barra espaciadora) marca cuándo empieza el
+// siguiente renglón de frases.txt. Al final arma el archivo con los tiempos para copiarlo.
+
+const MARK = new URLSearchParams(location.search).has("marcar");
+const fmt = (s) => { const m = Math.floor(s / 60), r = s - m * 60; return `${m}:${r < 10 ? "0" : ""}${r.toFixed(1)}`; };
+
+function setupMarking() {
+  const css = document.createElement("style");
+  css.textContent = `.mark { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(92vw, 560px);
+    font: 15px ui-sans-serif, system-ui, sans-serif; color: #eee; background: rgba(20, 20, 26, 0.92); border-radius: 10px; padding: 12px 14px; }
+    .mark b { color: #ff9ac0; } .mark textarea { width: 100%; height: 40vh; margin-top: 8px; font: 13px ui-monospace, monospace; }
+    .mark button { margin-top: 8px; font: inherit; padding: 6px 14px; border-radius: 8px; border: 0; cursor: pointer; }`;
+  document.head.appendChild(css);
+  const box = document.createElement("div");
+  box.className = "mark";
+  document.body.appendChild(box);
+  let next = 0, started = false;
+  const marks = [];
+  const show = () => {
+    box.innerHTML = !started
+      ? "Modo para marcar tiempos: toca aquí o la barra espaciadora para empezar la canción."
+      : next < lines.length
+        ? `Toca cuando empiece: <b>${lines[next].text.replace(/</g, "&lt;")}</b> (${next + 1} de ${lines.length})`
+        : "Listo.";
+  };
+  const finish = () => {
+    audio.pause(); playing = false;
+    const out = [`inicio ${fmt(clip.start).replace(/\.\d$/, "")}`, `fin ${fmt(clip.end).replace(/\.\d$/, "")}`]
+      .concat(lines.map((l, i) => `${fmt(marks[i] ?? l.t)} ${l.text} [${l.face}]`)).join("\n");
+    box.innerHTML = "Copia esto y pégalo en frases.txt en lugar de lo que tenía:";
+    const ta = document.createElement("textarea");
+    ta.value = out;
+    const copy = document.createElement("button");
+    copy.textContent = "copiar";
+    copy.onclick = () => { ta.select(); navigator.clipboard?.writeText(out).catch(() => {}); copy.textContent = "copiado"; };
+    box.append(ta, copy);
+  };
+  const tap = () => {
+    if (!started) { started = true; start(); show(); return; }
+    if (next >= lines.length) return;
+    marks[next++] = Math.max(0, audio.currentTime - clip.start);
+    next >= lines.length ? finish() : show();
+  };
+  window.addEventListener("keydown", (e) => { if (e.code === "Space") { e.preventDefault(); tap(); } });
+  canvas.addEventListener("click", (e) => { e.stopImmediatePropagation(); tap(); }, true);
+  box.addEventListener("click", () => { if (next < lines.length) tap(); });
+  audio.addEventListener("pause", () => { if (started && next < lines.length && audio.currentTime >= clip.end - 0.1) finish(); });
+  show();
+}
+
+Promise.all([loadPhrases(), document.fonts.load('15px "Gochi Hand"').catch(() => {})]).then(() => {
+  if (MARK) setupMarking();
+  requestAnimationFrame(loop);
+});
 
 // Para revisar desde la consola: dibuja el segundo `sec` de la parte sin sonar.
 window.__cancion = { lines, clip, at: (sec) => { done = true; Object.defineProperty(audio, "currentTime", { value: clip.start + sec, configurable: true, writable: true }); render(clock); } };
