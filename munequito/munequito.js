@@ -1,4 +1,4 @@
-// Un muñequito de garabato que se cuida como mascota: se le da de comer, se baña, se apapacha
+// Un muñequito de garabato que se cuida como mascota: se le da de comer, se baña, se le da un besito
 // y se pone a dormir. Tiene hambre, limpieza, cariño y energía, que bajan con el tiempo real
 // (también con la página cerrada) y se guardan en este navegador.
 //
@@ -230,16 +230,19 @@ function drawPet() {
     open > 0.2 ? circle(cx, my, 2 + open * 2.5, 80) : arc(cx, my - 2, 4, Math.PI * 0.2, Math.PI * 0.8, 81);
   } else if (m === "bath" || yawn || m === "sleep") {
     circle(cx, my + (m === "sleep" ? 1 : 0), m === "sleep" ? 1.6 : yawn ? 3.5 : 2.2, 82);
-  } else if (m === "love" || m === "happy") {
-    arc(cx, my - 3, m === "love" ? 5.5 : 4.5, Math.PI * 0.15, Math.PI * 0.85, 83);
-    if (m === "love") line(cx - 5, my - 0.5, cx + 5, my - 0.5, 84);
+  } else if (m === "love") {
+    // Trompita de besito.
+    arc(cx - 1, my - 1, 1.6, -Math.PI * 0.5, Math.PI * 0.5, 83);
+    arc(cx - 1, my + 2, 1.6, -Math.PI * 0.5, Math.PI * 0.5, 84);
+  } else if (m === "happy") {
+    arc(cx, my - 3, 4.5, Math.PI * 0.15, Math.PI * 0.85, 83);
   } else if (m === "full") {
     line(cx - 4, my, cx + 4, my, 85);
   } else {
     arc(cx, my + 4, 4, Math.PI * 1.2, Math.PI * 1.8, 86); // triste
   }
 
-  // Chapitas cuando lo apapachan o está contento después de comer.
+  // Chapitas cuando le dan un besito o está contento después de comer.
   if (m === "love" || (m === "feed" && at > 0.8 && !act.refused)) {
     for (const s of [-1, 1]) for (let k = 0; k < 3; k++) line(cx + s * 13 - 2 + k * 1.6, cy + 3, cx + s * 13 - 3 + k * 1.6, cy + 5.5, 90 + k + s * 5);
   }
@@ -349,7 +352,7 @@ const IDLE = {
   hungry: ["tengo hambre...", "¿hay galletas?", "mi pancita suena"],
   dirty: ["huelo raro...", "¿me bañas?", "tengo una mosca"],
   tired: ["tengo sueño...", "ya me quiero dormir"],
-  lonely: ["apapáchame", "te extrañé mucho", "¿dónde andabas?"],
+  lonely: ["dame un besito", "te extrañé mucho", "¿dónde andabas?"],
 };
 
 // ---------- Barras: hambre, limpieza, cariño, energía ----------
@@ -421,11 +424,27 @@ function bath() {
   say(pick(["¡burbujas!", "ya huelo rico", "agua calientita"]), 2.2);
   save();
 }
+// El día en que se vuelven a ver (cuando el ramo tiene sus 29 flores).
+const REUNION = new Date(2026, 10, 23);
+
+function countdown() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((REUNION - today) / 86400000);
+  if (days > 1) return `faltan ${days} días para volver a verte`;
+  if (days === 1) return "falta 1 día para volver a verte";
+  if (days === 0) return "¡hoy te vuelvo a ver!";
+  return null; // ya pasó: no lo dice
+}
+
 function love() {
   if (st.sleeping) { wake(); return; }
   start("love", 1.8);
   st.love = clamp(st.love + 15);
-  say(pick(["te quiero", "más, más", "jeje", "yo también te extraño", "eres lo máximo"]));
+  const lines = ["te amo mucho mucho mucho", "te amo tanto", "te extraño"];
+  const left = countdown();
+  if (left) lines.push(left);
+  say(pick(lines), 3);
   save();
 }
 function sleep() {
@@ -441,7 +460,7 @@ btn.feed.addEventListener("click", feed);
 btn.bath.addEventListener("click", bath);
 btn.love.addEventListener("click", love);
 btn.sleep.addEventListener("click", sleep);
-// Tocar el refri le da de comer; tocar cualquier otra parte lo apapacha.
+// Tocar el refri le da de comer; tocarlo a él (o cualquier otra parte) es darle un besito.
 canvas.addEventListener("click", (e) => {
   const r = canvas.getBoundingClientRect();
   const x = ((e.clientX - r.left) / r.width) * W, y = ((e.clientY - r.top) / r.height) * H;
