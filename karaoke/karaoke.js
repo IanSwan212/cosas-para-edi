@@ -123,6 +123,7 @@ function fileTrack(def) {
       if (audio.paused) audio.play().catch(() => {}); else audio.pause();
     },
     stop() { audio.pause(); audio.currentTime = 0; },
+    seek(s) { audio.currentTime = s; }, // para revisar desde la consola
     // Nivel de la voz (0..1), suavizado y relativo a lo más fuerte que ha sonado.
     sample() {
       if (!analyser || audio.paused) { level *= 0.85; return; }
@@ -263,27 +264,26 @@ const lineSpans = (l) => (l ? l.words.map((w) => `<span class="w">${esc(w.text)}
 
 function updateLyrics(t) {
   const lines = track.lines;
-  let idx = track.started() ? lines.findIndex((l) => t < l.t1 - 0.25) : -1;
-  // Antes del primer renglón se muestra ya lo que viene.
-  if (track.started() && idx > 0 && t < lines[idx].t0 - 1 && t >= lines[idx - 1].t1) idx = idx;
-  const key = `${def.id}:${idx}:${lines.length}`;
+  // Solo se ve el renglón que se está cantando, y cada palabra aparece cuando le toca;
+  // entre renglones (intro, solos) no se ve nada.
+  const idx = track.started() ? lines.findIndex((l) => t >= l.t0 && t < l.t1) : -1;
+  const key = `${def.id}:${idx}:${lines.length}:${track.started()}:${track.ended()}`;
   if (key !== shownLine) {
     shownLine = key;
+    rows[1].innerHTML = "&nbsp;";
     if (!lines.length) {
       rows[0].innerHTML = "falta la letra";
       rows[1].innerHTML = `pégala en karaoke/${def.letra}`;
-    } else if (idx < 0) {
-      rows[0].innerHTML = track.started() && track.ended() ? "gracias por cantar conmigo" : "toca «cantar»";
-      rows[1].innerHTML = "&nbsp;";
-    } else {
-      rows[0].innerHTML = lineSpans(lines[idx]);
-      rows[1].innerHTML = lineSpans(lines[idx + 1]);
-    }
+    } else if (idx >= 0) rows[0].innerHTML = lineSpans(lines[idx]);
+    else if (!track.started()) rows[0].innerHTML = "toca «cantar»";
+    else rows[0].innerHTML = track.ended() ? "gracias por cantar conmigo" : "&nbsp;";
   }
   if (idx < 0) return;
   const spans = rows[0].querySelectorAll(".w");
   lines[idx].words.forEach((w, i) => {
-    if (spans[i]) spans[i].style.setProperty("--p", `${(clamp01((t - w.t0) / Math.max(0.05, w.t1 - w.t0)) * 100).toFixed(1)}%`);
+    if (!spans[i]) return;
+    spans[i].style.visibility = t >= w.t0 ? "visible" : "hidden";
+    spans[i].style.setProperty("--p", `${(clamp01((t - w.t0) / Math.max(0.05, w.t1 - w.t0)) * 100).toFixed(1)}%`);
   });
 }
 
