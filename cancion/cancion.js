@@ -156,11 +156,14 @@ function moveCamera(line, t, dt) {
   if (line !== curLine) { curLine = line; lastMove = t; }
   const k = 1 - Math.exp(-dt * 3.2);
   // El cursor queda un poco a la derecha del centro: se ve lo recién escrito a su izquierda.
-  camX += (tx - (window.innerWidth * 0.12) / camZ - camX) * k;
+  // El editor ocupa casi todo el ancho de la pantalla, así el renglón completo se lee;
+  // la cámara solo sube y baja siguiendo el renglón que se escribe.
+  const fit = Math.min(1.5, (window.innerWidth * 0.8) / 900);
+  camX += (450 - camX) * k;
   camY += (ty - camY) * k;
-  const zoom = 1.6 + 0.15 * Math.sin(t * 0.35);
+  const zoom = fit * (1 + 0.04 * Math.sin(t * 0.35));
   camZ += (zoom - camZ) * k;
-  const rx = 8 + 3 * Math.sin(t * 0.27), ry = -14 + 6 * Math.sin(t * 0.21), rz = -3 + 1.5 * Math.sin(t * 0.31);
+  const rx = 6 + 2 * Math.sin(t * 0.27), ry = 1.2 * Math.sin(t * 0.21), rz = -1.2 + 0.8 * Math.sin(t * 0.31);
   cam.style.transform = `scale(${camZ}) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) translate(${-camX}px, ${-camY}px)`;
   const moving = t - lastMove < 0.45;
   cam.style.filter = moving ? "blur(2.2px)" : "blur(0px)";
