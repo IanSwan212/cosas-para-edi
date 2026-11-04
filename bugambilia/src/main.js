@@ -1,12 +1,12 @@
 // Escena de la bugambilia: renderizador, luces, cámara, reloj único y controles.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { buildPlant } from "./plant.js?v=mw1mgq2a";
-import { TIMING, DURATION, windAt } from "./timeline.js?v=mw1mgq2a";
-import { bractState, flowerState, assignMessage, heartPoints } from "./bracts.js?v=mw1mgq2a";
-import { createBranchMesh, createLeafMesh, createThornMesh, createBractMesh, createFlowerMesh, srgb } from "./meshes.js?v=mw1mgq2a";
-import { createSky, createHills } from "./sky.js?v=mw1mgq2a";
-import { AsciiView, markAsGround } from "./ascii.js?v=mw1mgq2a";
+import { buildPlant } from "./plant.js?v=mw1myqzz";
+import { TIMING, DURATION, windAt } from "./timeline.js?v=mw1myqzz";
+import { bractState, flowerState, assignMessage, heartPoints } from "./bracts.js?v=mw1myqzz";
+import { createBranchMesh, createLeafMesh, createThornMesh, createBractMesh, createFlowerMesh, srgb } from "./meshes.js?v=mw1myqzz";
+import { createSky, createHills } from "./sky.js?v=mw1myqzz";
+import { AsciiView, markAsGround } from "./ascii.js?v=mw1myqzz";
 
 // El sol del atardecer: bajo, detrás de la planta y un poco a la izquierda (de frente a la cámara).
 const SUN = new THREE.Vector3(-0.24, 0.1, -1).normalize();

@@ -4,7 +4,7 @@
 // aplica la escala del latido. Cuando todo está asentado, la capa ya no se
 // vuelve a dibujar: solo se recompone.
 
-import { fontString } from "./fontManager.js?v=mw1mgq2a";
+import { fontString } from "./fontManager.js?v=mw1myqzz";
 
 const smoothBump = (x, start, dur) => {
   if (x < start || x > start + dur) return 0;

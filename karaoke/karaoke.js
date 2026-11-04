@@ -378,4 +378,4 @@ function loop(now) {
 
 document.fonts.load('15px "Gochi Hand"').catch(() => {}).finally(() => requestAnimationFrame(loop));
 
-window.__karaoke = { songs: SONGS, choose: (id) => choose(SONGS.find((s) => s.id === id)), track: () => track };
+window.__karaoke = { songs: SONGS, choose: (id) => choose(SONGS.find((s) => s.id === id)), track: () => track, draw: (t) => render(t, false) };

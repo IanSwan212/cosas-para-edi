@@ -7,9 +7,9 @@ export const LINKS = {
   2: { url: "../espiral/", title: "Spiral Art", preview: "assets/previews/espiral.jpg" },
   3: { url: "../luna/", title: "La noche del 8 de abril", preview: "assets/previews/luna.jpg" },
   4: { url: "../zorro/", title: "Mirándote y pensando en ti", preview: "assets/previews/zorro.jpg" },
-  5: { url: "../bugambilia/", title: "Es que te amo tanto" },
-  6: { url: "../carta/", title: "Una carta para ti" },
-  7: { url: "../munequito/", title: "Te extraño..." },
-  8: { url: "../cancion/", title: "Te escribí algo" },
-  9: { url: "../karaoke/", title: "Karaoke para ti" }
+  5: { url: "../bugambilia/", title: "Es que te amo tanto", preview: "assets/previews/bugambilia.jpg" },
+  6: { url: "../carta/", title: "Una carta para ti", preview: "assets/previews/carta.jpg" },
+  7: { url: "../munequito/", title: "Te extraño...", preview: "assets/previews/munequito.jpg" },
+  8: { url: "../cancion/", title: "Te escribí algo", preview: "assets/previews/cancion.jpg" },
+  9: { url: "../karaoke/", title: "Karaoke para ti", preview: "assets/previews/karaoke.jpg" }
 };
