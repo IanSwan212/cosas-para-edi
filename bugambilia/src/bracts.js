@@ -12,8 +12,8 @@
 // mira a la cámara (el marco `frame` llega desde la escena en cada cuadro). Al final otra
 // ráfaga lo deshace de izquierda a derecha: cada bráctea parte de su lugar sin velocidad,
 // sube, gira y se desvanece en el viento.
-import { rng, add, sub, mul, cross, norm, mix3, qAxis, qMul, qBasis, qSlerp } from "./math.js";
-import { TIMING, progress, easeOutCubic, lerp, smoothstep, windAt } from "./timeline.js";
+import { rng, add, sub, mul, cross, norm, mix3, qAxis, qMul, qBasis, qSlerp } from "./math.js?v=mw1mgq2a";
+import { TIMING, progress, easeOutCubic, lerp, smoothstep, windAt } from "./timeline.js?v=mw1mgq2a";
 
 const X = [1, 0, 0], Y = [0, 1, 0];
 const BUD = [0.74, 0.76, 0.5]; // el capullo nace verde pálido y se va tiñendo

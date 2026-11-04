@@ -3,7 +3,7 @@
 // La cúpula se dibuja siempre al fondo (profundidad máxima) y sigue a la cámara.
 // Sus colores ya son de pantalla: la vista ASCII no les aplica mapeo de tonos.
 import * as THREE from "three";
-import { markAsGround } from "./ascii.js";
+import { markAsGround } from "./ascii.js?v=mw1mgq2a";
 
 const SKY_VERT = `
 varying vec3 vDir;

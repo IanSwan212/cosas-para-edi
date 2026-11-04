@@ -8,9 +8,9 @@
 //   4 pedicelos diminutos que sostienen cada tríada de brácteas
 // Cada rama nace en un punto de su madre y empieza a crecer cuando el frente de crecimiento
 // de la madre pasa por ese punto, así que nada queda flotando.
-import { rng, add, sub, mul, norm, perp, mix3, qAxis, qRot, frameY } from "./math.js";
-import { TIMING } from "./timeline.js";
-import { planRelease } from "./bracts.js";
+import { rng, add, sub, mul, norm, perp, mix3, qAxis, qRot, frameY } from "./math.js?v=mw1mgq2a";
+import { TIMING } from "./timeline.js?v=mw1mgq2a";
+import { planRelease } from "./bracts.js?v=mw1mgq2a";
 
 export const SEED = 81026;
 

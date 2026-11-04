@@ -1,12 +1,12 @@
-import { localToday, isComplete, parseISO } from "./calendar.js?v=mvue8paf";
-import { createProgress } from "./progress.js?v=mvue8paf";
-import { FLOWERS } from "./flowerDefs.js?v=mvue8paf";
-import { createScene, createBouquet } from "./bouquet.js?v=mvue8paf";
-import { renderText, showFinal } from "./ui.js?v=mvue8paf";
-import { AsciiView } from "./asciiView.js?v=mvue8paf";
+import { localToday, isComplete, parseISO } from "./calendar.js?v=mw1mgq2a";
+import { createProgress } from "./progress.js?v=mw1mgq2a";
+import { FLOWERS } from "./flowerDefs.js?v=mw1mgq2a";
+import { createScene, createBouquet } from "./bouquet.js?v=mw1mgq2a";
+import { renderText, showFinal } from "./ui.js?v=mw1mgq2a";
+import { AsciiView } from "./asciiView.js?v=mw1mgq2a";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { startMusic } from "./music.js?v=mvue8paf";
-import { setupFlowerLinks } from "./flowerLinks.js?v=mvue8paf";
+import { startMusic } from "./music.js?v=mw1mgq2a";
+import { setupFlowerLinks } from "./flowerLinks.js?v=mw1mgq2a";
 
 const canvas = document.getElementById("scene");
 
