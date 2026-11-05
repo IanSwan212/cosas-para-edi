@@ -1,12 +1,14 @@
 // Un muñequito de garabato que se cuida como mascota: se le da de comer, se baña, se le da un besito
 // y se pone a dormir. Tiene hambre, limpieza, cariño y energía, que bajan con el tiempo real
-// (también con la página cerrada) y se guardan en este navegador.
+// (también con la página cerrada). El estado es el mismo para los dos: se comparte en Firebase
+// (compartido.js) y además se guarda en este navegador por si no hay conexión.
 //
 // Se dibuja como en el video: a baja resolución, en blanco y negro puros (cada cuadro se pasa a
 // 1 bit) y con trazos que tiemblan un poco en cada cuadro, como una animación hecha a mano. Al lado
 // escribe palabras a mano, una por una. Vive en un cuartito dibujado igual: ventana, sillón,
 // alfombra, lámpara de piso y un refri, de donde sale su comida.
 
+import { connect, serverNow } from "./compartido.js";
 const W = 240, H = 160, FPS = 12, TAU = Math.PI * 2;
 const KEY = "munequito.v1";
 const canvas = document.getElementById("pet");
@@ -18,7 +20,7 @@ const btn = {
 
 const clamp = (x, a = 0, b = 100) => (x < a ? a : x > b ? b : x);
 const clamp01 = (x) => clamp(x, 0, 1);
-const nowS = () => Date.now() / 1000;
+const nowS = () => serverNow(); // hora del servidor (si hay conexión), igual para los dos
 const rnd = (a, b) => a + (b - a) * Math.random();
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -438,39 +440,11 @@ function render() {
 }
 
 // ---------- Acciones ----------
+// Cada acción tiene dos partes: lo que le pasa al estado (EFFECT, se aplica igual aquí y en el
+// estado compartido) y lo que se ve (animate, que también se ve en la otra pantalla).
 
 function start(kind, dur) { act = { kind, t0: clock, dur, refused: false }; }
 
-function wake(quiet) {
-  if (!st.sleeping) return;
-  st.sleeping = false;
-  btn.sleep.textContent = "dormir";
-  if (!quiet) say("ya desperté");
-}
-
-function poke() {
-  wake(true);
-  foxPoke = clock;
-  st.love = clamp(st.love + 3);
-  say(pick(["es mi zorrito", "¡zorrito!", "lo abrazo cuando te extraño", "se parece a ti"]));
-  save();
-}
-
-function feed() {
-  wake(true);
-  if (st.hunger > 92) { start("feed", 1.6); act.refused = true; say("ya no me cabe nada"); return; }
-  start("feed", 2.8);
-  st.hunger = clamp(st.hunger + 32); st.love = clamp(st.love + 3);
-  say(pick(["ñam ñam", "gracias", "qué rica galleta", "mmm"]));
-  save();
-}
-function bath() {
-  wake(true);
-  start("bath", 3.4);
-  st.clean = 100; st.love = clamp(st.love + 4); st.energy = clamp(st.energy - 3);
-  say(pick(["¡burbujas!", "ya huelo rico", "agua calientita"]), 2.2);
-  save();
-}
 // El día en que se vuelven a ver (cuando el ramo tiene sus 29 flores).
 const REUNION = new Date(2026, 10, 23);
 
@@ -484,40 +458,85 @@ function countdown() {
   return null; // ya pasó: no lo dice
 }
 
-function love() {
-  if (st.sleeping) { wake(); return; }
-  start("love", 1.8);
-  st.love = clamp(st.love + 15);
-  const lines = ["te amo mucho mucho mucho", "te amo tanto", "te extraño"];
-  const left = countdown();
-  if (left) lines.push(left);
-  say(pick(lines), 3);
-  save();
+// Cambia el estado s y dice qué pasó (para la animación): p. ej. comer estando lleno → "refuse".
+const EFFECT = {
+  feed(s) { s.sleeping = false; if (s.hunger > 92) return "refuse"; s.hunger += 32; s.love += 3; return "feed"; },
+  bath(s) { s.sleeping = false; s.clean = 100; s.love += 4; s.energy -= 3; return "bath"; },
+  love(s) { if (s.sleeping) { s.sleeping = false; return "wake"; } s.love += 15; return "love"; },
+  sleep(s) { if (s.sleeping) { s.sleeping = false; return "wake"; } s.sleeping = true; return "sleep"; },
+  poke(s) { s.sleeping = false; s.love += 3; return "poke"; },
+  wake(s) { if (!s.sleeping) return null; s.sleeping = false; return "wake"; },
+};
+
+function animate(kind) {
+  if (kind === "feed") { start("feed", 2.8); say(pick(["ñam ñam", "gracias", "qué rica galleta", "mmm"])); }
+  else if (kind === "refuse") { start("feed", 1.6); act.refused = true; say("ya no me cabe nada"); }
+  else if (kind === "bath") { start("bath", 3.4); say(pick(["¡burbujas!", "ya huelo rico", "agua calientita"]), 2.2); }
+  else if (kind === "love") {
+    start("love", 1.8);
+    const lines = ["te amo mucho mucho mucho", "te amo tanto", "te extraño"];
+    const left = countdown();
+    if (left) lines.push(left);
+    say(pick(lines), 3);
+  } else if (kind === "sleep") { act = null; say("buenas noches"); }
+  else if (kind === "wake") say("ya desperté");
+  else if (kind === "poke") { foxPoke = clock; say(pick(["es mi zorrito", "¡zorrito!", "lo abrazo cuando te extraño", "se parece a ti"])); }
 }
-function sleep() {
-  if (st.sleeping) { wake(); save(); return; }
-  act = null;
-  st.sleeping = true;
-  btn.sleep.textContent = "despertar";
-  say("buenas noches");
+
+const clampAll = (s) => { for (const k of ["hunger", "clean", "love", "energy"]) s[k] = clamp(s[k]); };
+
+// Lo que hizo la otra persona, para verlo aquí también (y no repetir lo que hice yo).
+const ME = Math.random().toString(36).slice(2, 10);
+let seq = 0, lastActId = null;
+
+function doAction(name) {
+  const kind = EFFECT[name](st);
+  clampAll(st);
+  if (kind) animate(kind);
+  save();
+  if (!shared) return;
+  const id = `${ME}-${++seq}`;
+  lastActId = id;
+  shared((cur) => {
+    const s = cur && typeof cur.hunger === "number" ? cur : { ...st, last: serverNow() };
+    decay(s, serverNow() - s.last);
+    const k = EFFECT[name](s);
+    clampAll(s);
+    s.last = serverNow();
+    s.act = { kind: k || "none", at: s.last, id };
+    return s;
+  });
+}
+
+// Llega el estado compartido: se toma como el bueno (decaído hasta ahora) y, si fue una acción
+// reciente de la otra persona, se ve su animación.
+function onShared(remote) {
+  const s = { ...remote };
+  decay(s, serverNow() - s.last);
+  for (const k of ["hunger", "clean", "love", "energy", "sleeping"]) st[k] = s[k];
+  st.last = serverNow();
+  const a = remote.act;
+  if (a && a.id !== lastActId) {
+    lastActId = a.id;
+    if (!a.id.startsWith(ME) && serverNow() - a.at < 8 && a.kind !== "none") animate(a.kind);
+  }
   save();
 }
 
-btn.feed.addEventListener("click", feed);
-btn.bath.addEventListener("click", bath);
-btn.love.addEventListener("click", love);
-btn.sleep.addEventListener("click", sleep);
+btn.feed.addEventListener("click", () => doAction("feed"));
+btn.bath.addEventListener("click", () => doAction("bath"));
+btn.love.addEventListener("click", () => doAction("love"));
+btn.sleep.addEventListener("click", () => doAction("sleep"));
 // Tocar el refri le da de comer; tocar el zorrito lo hace menearse; tocarlo a él (o cualquier
 // otra parte) es darle un besito.
 canvas.addEventListener("click", (e) => {
   const r = canvas.getBoundingClientRect();
   const x = ((e.clientX - r.left) / r.width) * W, y = ((e.clientY - r.top) / r.height) * H;
   const f = FRIDGE;
-  if (x > f.x - 2 && x < f.x + f.w + 2 && y > f.y - 2 && y < f.y + f.h + 2) feed();
-  else if (x > FOX.x - 12 && x < FOX.x + 23 && y > FOX.y - 38 && y < FOX.y + 4) poke();
-  else love();
+  if (x > f.x - 2 && x < f.x + f.w + 2 && y > f.y - 2 && y < f.y + f.h + 2) doAction("feed");
+  else if (x > FOX.x - 12 && x < FOX.x + 23 && y > FOX.y - 38 && y < FOX.y + 4) doAction("poke");
+  else doAction("love");
 });
-if (st.sleeping) btn.sleep.textContent = "despertar";
 
 // ---------- Bucle: 12 cuadros por segundo, como la animación del video ----------
 
@@ -527,7 +546,8 @@ function loop(now) {
   lastReal = now;
   clock += dt;
   decay(st, dt);
-  if (st.sleeping && st.energy >= 100) { wake(); save(); }
+  if (st.sleeping && st.energy >= 100) doAction("wake"); // descansó: se despierta solo
+  btn.sleep.textContent = st.sleeping ? "despertar" : "dormir";
   if (act && clock - act.t0 > act.dur) act = null;
   if (!msg && !act && clock > nextIdle) {
     const m = mood(), pool = IDLE[m] || IDLE.happy;
@@ -541,11 +561,14 @@ function loop(now) {
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 
+let shared = null;
+connect(onShared).then((fn) => { shared = fn; });
+
 document.fonts.load('15px "Gochi Hand"').catch(() => {}).finally(() => {
   if (st.hunger < 30) say("¡volviste! tengo hambre"); else say("hola, te extrañé");
   requestAnimationFrame(loop);
 });
 
 // Para revisar desde la consola.
-window.__muneco = { st, feed, bath, love, sleep, render, at: (sec) => { clock = sec; boil = Math.floor(sec * FPS / 2); render(); },
-  set: (o) => Object.assign(st, o), act: () => act };
+window.__muneco = { st, doAction, render, at: (sec) => { clock = sec; boil = Math.floor(sec * FPS / 2); render(); },
+  set: (o) => Object.assign(st, o), act: () => act, shared: () => !!shared };

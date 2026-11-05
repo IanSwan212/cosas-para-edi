@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "munequito": {
+      "estado": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['hunger', 'clean', 'love', 'energy', 'sleeping', 'last'])",
+        "hunger": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "clean": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "love": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "energy": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100" },
+        "sleeping": { ".validate": "newData.isBoolean()" },
+        "last": { ".validate": "newData.isNumber()" },
+        "act": {
+          "kind": { ".validate": "newData.isString() && newData.val().matches(/^(feed|refuse|bath|love|sleep|wake|poke|none)$/)" },
+          "at": { ".validate": "newData.isNumber()" },
+          "id": { ".validate": "newData.isString() && newData.val().length < 40" },
+          "$otro": { ".validate": false }
+        },
+        "$otro": { ".validate": false }
+      }
+    }
+  }
+}
