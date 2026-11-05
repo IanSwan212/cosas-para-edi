@@ -27,7 +27,7 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 // ---------- Estado de la mascota ----------
 
 // Cuánto baja cada cosa por hora (y cuánto se recupera la energía dormido).
-const RATE = { hunger: 9, clean: 6, love: 8, energy: 7, rest: 35 };
+const RATE = { hunger: 9, clean: 6, love: 8, energy: 7, rest: 35, slim: 1.2, starve: 4 };
 
 function decay(s, sec) {
   const h = Math.min(Math.max(sec, 0), 3 * 24 * 3600) / 3600; // a lo mucho 3 días de abandono
@@ -35,10 +35,12 @@ function decay(s, sec) {
   s.clean = clamp(s.clean - RATE.clean * h);
   s.love = clamp(s.love - RATE.love * h);
   s.energy = clamp(s.sleeping ? s.energy + RATE.rest * h : s.energy - RATE.energy * h);
+  // Peso (50 = normal): baja poco a poco, y más rápido si pasa hambre.
+  s.weight = clamp((s.weight ?? 50) - (s.hunger < 25 ? RATE.starve : RATE.slim) * h);
 }
 
 function load() {
-  const fresh = { hunger: 75, clean: 80, love: 70, energy: 80, sleeping: false, last: nowS() };
+  const fresh = { hunger: 75, clean: 80, love: 70, energy: 80, weight: 50, sleeping: false, last: nowS() };
   let s = null;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   s = s && typeof s.hunger === "number" ? { ...fresh, ...s } : fresh;
@@ -69,6 +71,17 @@ function circle(cx, cy, r, id, fill = false) {
   for (let k = 0; k <= n; k++) {
     const a = (k / n) * TAU, rr = r + wob(id * 31 + (k % n), Math.min(0.7, r * 0.08 + 0.25));
     const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+    k ? g.lineTo(x, y) : g.moveTo(x, y);
+  }
+  g.closePath();
+  fill ? g.fill() : g.stroke();
+}
+function oval(cx, cy, rx, ry, id, fill = false) {
+  const n = Math.max(10, Math.round(Math.max(rx, ry) * 1.8));
+  g.beginPath();
+  for (let k = 0; k <= n; k++) {
+    const a = (k / n) * TAU, j = wob(id * 31 + (k % n), 0.6);
+    const x = cx + Math.cos(a) * (rx + j), y = cy + Math.sin(a) * (ry + j);
     k ? g.lineTo(x, y) : g.moveTo(x, y);
   }
   g.closePath();
@@ -231,6 +244,8 @@ function mood() {
   if (st.energy < 25) return "tired";
   if (st.clean < 30) return "dirty";
   if (st.love < 30) return "lonely";
+  if (st.weight < 20) return "skinny";
+  if (st.weight > 80) return "chubby";
   return "happy";
 }
 
@@ -242,9 +257,13 @@ function drawPet() {
   if (m === "love") cy -= Math.abs(Math.sin(at * 7)) * 3; // da saltitos
   if (m === "sleep") cy = PET.y + 3 + Math.sin(clock * 1.2) * 1.2;
   const R = PET.r;
+  const fat = clamp((st.weight ?? 50) - 50, -50, 50) / 50; // -1 flaquito … 1 gordito
+  const rx = R * (1 + 0.32 * fat), ry = R * (1 + 0.06 * fat);
   g.lineWidth = 1.7;
-  g.fillStyle = "#fff"; circle(cx, cy, R, 1, true); g.fillStyle = "#000"; // tapa el sillón de atrás
-  circle(cx, cy, R, 1);
+  g.fillStyle = "#fff"; oval(cx, cy, rx, ry, 1, true); g.fillStyle = "#000"; // tapa el sillón de atrás
+  oval(cx, cy, rx, ry, 1);
+  if (fat > 0.4) for (const s of [-1, 1]) arc(cx + s * (rx - 5), cy + 4, 3, s > 0 ? Math.PI * 0.6 : -Math.PI * 0.4, s > 0 ? Math.PI * 1.4 : Math.PI * 0.4, 7 + s); // cachetitos
+  if (fat < -0.4) for (const s of [-1, 1]) line(cx + s * (rx - 4), cy + 2, cx + s * (rx - 5), cy + 8, 5 + s); // mejillas hundidas
 
   // Ojos
   const blink = (clock % 3.7) < 0.14;
@@ -274,7 +293,7 @@ function drawPet() {
     // Trompita de besito.
     arc(cx - 1, my - 1, 1.6, -Math.PI * 0.5, Math.PI * 0.5, 83);
     arc(cx - 1, my + 2, 1.6, -Math.PI * 0.5, Math.PI * 0.5, 84);
-  } else if (m === "happy") {
+  } else if (m === "happy" || m === "chubby") {
     arc(cx, my - 3, 4.5, Math.PI * 0.15, Math.PI * 0.85, 83);
   } else if (m === "full") {
     line(cx - 4, my, cx + 4, my, 85);
@@ -288,7 +307,8 @@ function drawPet() {
   }
 
   // Manitas
-  let L = [cx - 27, cy + 13], Rh = [cx + 27, cy + 12];
+  const side = rx + 9; // las manitas siguen el ancho del cuerpo
+  let L = [cx - side, cy + 13], Rh = [cx + side, cy + 12];
   if (m === "feed" && !act.refused && at > 0.6 && at < 2.4) { L = [cx - 13, cy + 12]; Rh = [cx + 13, cy + 12]; }
   else if (m === "bath") { const k = Math.sin(at * 12) * 3; L = [cx - 13 + k, cy - 22]; Rh = [cx + 13 - k, cy - 23]; }
   else if (m === "love") { L = [cx - 22, cy + 5]; Rh = [cx + 22, cy + 5]; }
@@ -342,7 +362,7 @@ function drawEffects(p) {
       if (ct > 0 && ct < 0.8) circle(p.cx - 6 + hash(i) * 12, p.cy + 12 + ct * ct * 60, 0.6, 140 + i, true);
     }
   }
-  if (act.kind === "bath") {
+  if (act.kind === "bath" && !act.refused) {
     // Regadera, gotas, burbujas y al final destellos.
     line(p.cx - 2, 2, p.cx - 2, 12, 150); line(p.cx - 2, 2, p.cx + 14, 2, 151);
     arc(p.cx - 2, 16, 7, Math.PI * 1.05, Math.PI * 1.95, 152); line(p.cx - 9, 16, p.cx + 5, 16, 153);
@@ -393,12 +413,14 @@ const IDLE = {
   dirty: ["huelo raro...", "¿me bañas?", "tengo una mosca"],
   tired: ["tengo sueño...", "ya me quiero dormir"],
   lonely: ["dame un besito", "te extrañé mucho", "¿dónde andabas?"],
+  chubby: ["creo que ya comí muchas galletas", "estoy redondito", "mi pancita está llenita"],
+  skinny: ["estoy flaquito...", "¿me das de comer?", "ya casi no tengo pancita"],
 };
 
 // ---------- Barras: hambre, limpieza, cariño, energía ----------
 
 function drawStats() {
-  const items = [["hunger", 14], ["clean", 72], ["love", 130], ["energy", 188]];
+  const items = [["hunger", 6], ["clean", 53], ["love", 100], ["energy", 147], ["weight", 194]];
   g.lineWidth = 1;
   for (const [k, x] of items) {
     const y = 152;
@@ -406,8 +428,10 @@ function drawStats() {
     if (k === "clean") { g.beginPath(); g.moveTo(x + 3, y - 4.5); g.quadraticCurveTo(x + 7, y + 1, x + 3, y + 3); g.quadraticCurveTo(x - 1, y + 1, x + 3, y - 4.5); g.stroke(); }
     if (k === "love") heart(x + 3, y, 3.2, 210);
     if (k === "energy") { arc(x + 3, y, 3.5, Math.PI * 0.4, Math.PI * 1.6, 220); arc(x + 4.5, y, 2.6, Math.PI * 0.55, Math.PI * 1.45, 221); }
+    if (k === "weight") { oval(x + 3, y, 4, 3, 230); line(x + 3, y - 3, x + 3, y - 1, 231); } // panzita
     g.strokeRect(x + 10.5, y - 2.5, 24, 5);
-    g.fillRect(x + 11.5, y - 1.5, Math.round((22 * st[k]) / 100), 3);
+    g.fillRect(x + 11.5, y - 1.5, Math.round((22 * (st[k] ?? 50)) / 100), 3);
+    if (k === "weight") line(x + 22.5, y - 4, x + 22.5, y + 4, 232); // la rayita del medio es el peso normal
   }
   g.lineWidth = 1.7;
 }
@@ -460,8 +484,19 @@ function countdown() {
 
 // Cambia el estado s y dice qué pasó (para la animación): p. ej. comer estando lleno → "refuse".
 const EFFECT = {
-  feed(s) { s.sleeping = false; if (s.hunger > 92) return "refuse"; s.hunger += 32; s.love += 3; return "feed"; },
-  bath(s) { s.sleeping = false; s.clean = 100; s.love += 4; s.energy -= 3; return "bath"; },
+  feed(s) {
+    s.sleeping = false;
+    if (s.hunger > 92) return "refuse";
+    s.weight = (s.weight ?? 50) + (s.hunger > 70 ? 9 : 5); // comer sin hambre engorda más
+    s.hunger += 32; s.love += 3;
+    return "feed";
+  },
+  bath(s) {
+    s.sleeping = false;
+    if (s.clean > 90) return "nobath"; // ya está limpio: no se quiere bañar
+    s.clean = 100; s.love += 4; s.energy -= 3;
+    return "bath";
+  },
   love(s) { if (s.sleeping) { s.sleeping = false; return "wake"; } s.love += 15; return "love"; },
   sleep(s) { if (s.sleeping) { s.sleeping = false; return "wake"; } s.sleeping = true; return "sleep"; },
   poke(s) { s.sleeping = false; s.love += 3; return "poke"; },
@@ -472,6 +507,7 @@ function animate(kind) {
   if (kind === "feed") { start("feed", 2.8); say(pick(["ñam ñam", "gracias", "qué rica galleta", "mmm"])); }
   else if (kind === "refuse") { start("feed", 1.6); act.refused = true; say("ya no me cabe nada"); }
   else if (kind === "bath") { start("bath", 3.4); say(pick(["¡burbujas!", "ya huelo rico", "agua calientita"]), 2.2); }
+  else if (kind === "nobath") { start("bath", 1.4); act.refused = true; say(pick(["ya estoy limpiecito", "no quiero, ya me bañé", "¡ya huelo rico!"])); }
   else if (kind === "love") {
     start("love", 1.8);
     const lines = ["te amo mucho mucho mucho", "te amo tanto", "te extraño"];
@@ -483,7 +519,7 @@ function animate(kind) {
   else if (kind === "poke") { foxPoke = clock; say(pick(["es mi zorrito", "¡zorrito!", "lo abrazo cuando te extraño", "se parece a ti"])); }
 }
 
-const clampAll = (s) => { for (const k of ["hunger", "clean", "love", "energy"]) s[k] = clamp(s[k]); };
+const clampAll = (s) => { for (const k of ["hunger", "clean", "love", "energy", "weight"]) s[k] = clamp(s[k] ?? 50); };
 
 // Lo que hizo la otra persona, para verlo aquí también (y no repetir lo que hice yo).
 const ME = Math.random().toString(36).slice(2, 10);
@@ -513,7 +549,7 @@ function doAction(name) {
 function onShared(remote) {
   const s = { ...remote };
   decay(s, serverNow() - s.last);
-  for (const k of ["hunger", "clean", "love", "energy", "sleeping"]) st[k] = s[k];
+  for (const k of ["hunger", "clean", "love", "energy", "weight", "sleeping"]) st[k] = s[k] ?? st[k];
   st.last = serverNow();
   const a = remote.act;
   if (a && a.id !== lastActId) {
